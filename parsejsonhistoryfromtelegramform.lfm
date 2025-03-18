@@ -1,19 +1,19 @@
 object FrmMain: TFrmMain
   Left = 550
-  Height = 385
+  Height = 435
   Top = 332
   Width = 843
   Caption = 'Telegram history parser'
-  ClientHeight = 385
+  ClientHeight = 435
   ClientWidth = 843
   DesignTimePPI = 120
   OnCreate = FormCreate
   OnDestroy = FormDestroy
-  SessionProperties = 'FlNmEdtResultJSON.FileName;FlNmEdtAllUsers.FileName;FlNmEdtCuratorsFile.FileName'
+  SessionProperties = 'ChckBxStatLogger.Checked;DrctryEdtStat.Directory;FlNmEdtAllUsers.FileName;FlNmEdtCuratorsFile.FileName;FlNmEdtResultJSON.FileName'
   LCLVersion = '3.8.0.0'
   object PgCntrl: TPageControl
     Left = 0
-    Height = 385
+    Height = 435
     Top = 0
     Width = 843
     ActivePage = TbShtMain
@@ -22,7 +22,7 @@ object FrmMain: TFrmMain
     TabOrder = 0
     object TbShtMain: TTabSheet
       Caption = 'Main'
-      ClientHeight = 352
+      ClientHeight = 402
       ClientWidth = 835
       object FlNmEdtResultJSON: TFileNameEdit
         Left = 16
@@ -37,7 +37,6 @@ object FrmMain: TFrmMain
         NumGlyphs = 1
         MaxLength = 0
         TabOrder = 0
-        OnChange = FlNmEdtResultJSONChange
       end
       object LblFileNameResultJSON: TLabel
         Left = 24
@@ -57,7 +56,7 @@ object FrmMain: TFrmMain
       object FlNmEdtAllUsers: TFileNameEdit
         Left = 16
         Height = 28
-        Top = 108
+        Top = 188
         Width = 470
         Filter = '*.json'
         FilterIndex = 0
@@ -72,7 +71,7 @@ object FrmMain: TFrmMain
       object LblFileNameAllUsers: TLabel
         Left = 24
         Height = 20
-        Top = 88
+        Top = 168
         Width = 78
         Caption = 'all users file'
         FocusControl = FlNmEdtAllUsers
@@ -80,14 +79,14 @@ object FrmMain: TFrmMain
       object LblAllUsers: TLabel
         Left = 24
         Height = 20
-        Top = 136
+        Top = 216
         Width = 12
         Caption = '--'
       end
       object Button3: TButton
-        Left = 56
+        Left = 16
         Height = 31
-        Top = 296
+        Top = 354
         Width = 240
         Caption = 'Button3'
         TabOrder = 2
@@ -103,7 +102,7 @@ object FrmMain: TFrmMain
       object FlNmEdtCuratorsFile: TFileNameEdit
         Left = 16
         Height = 28
-        Top = 180
+        Top = 260
         Width = 470
         Filter = '*.json'
         FilterIndex = 0
@@ -118,7 +117,7 @@ object FrmMain: TFrmMain
       object LblFileNameCurators: TLabel
         Left = 24
         Height = 20
-        Top = 160
+        Top = 240
         Width = 80
         Caption = 'Curators file'
         FocusControl = FlNmEdtCuratorsFile
@@ -126,7 +125,7 @@ object FrmMain: TFrmMain
       object LblCurators: TLabel
         Left = 24
         Height = 20
-        Top = 208
+        Top = 288
         Width = 12
         Caption = '--'
       end
@@ -148,9 +147,9 @@ object FrmMain: TFrmMain
         Value = 1
       end
       object LblFailed: TLabel
-        Left = 72
+        Left = 32
         Height = 20
-        Top = 272
+        Top = 330
         Width = 12
         Caption = '--'
       end
@@ -162,10 +161,52 @@ object FrmMain: TFrmMain
         Caption = 'Strict filter'
         TabOrder = 6
       end
+      object DrctryEdtStat: TDirectoryEdit
+        Left = 16
+        Height = 28
+        Top = 112
+        Width = 472
+        ShowHidden = False
+        ButtonWidth = 29
+        NumGlyphs = 1
+        MaxLength = 0
+        TabOrder = 7
+        OnChange = DrctryEdtStatChange
+      end
+      object LblStat: TLabel
+        Left = 24
+        Height = 20
+        Top = 88
+        Width = 80
+        Caption = '"stat" folder'
+      end
+      object LblStatUpdateCount: TLabel
+        Left = 24
+        Height = 20
+        Top = 144
+        Width = 12
+        Caption = '--'
+      end
+      object LblStatFilesCount: TLabel
+        Left = 136
+        Height = 20
+        Top = 88
+        Width = 12
+        Caption = '--'
+      end
+      object ChckBxStatLogger: TCheckBox
+        Left = 312
+        Height = 24
+        Top = 88
+        Width = 140
+        Alignment = taLeftJustify
+        Caption = 'Stat logger parser'
+        TabOrder = 8
+      end
     end
     object TabSheet2: TTabSheet
       Caption = 'Settings'
-      ClientHeight = 352
+      ClientHeight = 402
       ClientWidth = 835
       object SpnEdtForumID2: TSpinEdit
         Left = 72
@@ -196,13 +237,13 @@ object FrmMain: TFrmMain
         Top = 120
         Width = 104
         TabOrder = 2
-        Value = 1676
+        Value = 3712
       end
     end
   end
   object IniPropStorage1: TIniPropStorage
     StoredValues = <>
-    Left = 596
-    Top = 267
+    Left = 556
+    Top = 325
   end
 end

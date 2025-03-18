@@ -28,10 +28,13 @@ type
     Button1: TButton;
     Button3: TButton;
     ChckBxStrictFilter: TCheckBox;
+    ChckBxStatLogger: TCheckBox;
+    DrctryEdtStat: TDirectoryEdit;
     FlNmEdtCuratorsFile: TFileNameEdit;
     FlNmEdtResultJSON: TFileNameEdit;
     FlNmEdtAllUsers: TFileNameEdit;
     IniPropStorage1: TIniPropStorage;
+    LblStat: TLabel;
     LblFailed: TLabel;
     LblCurators: TLabel;
     LblCompletedUsers: TLabel;
@@ -41,6 +44,8 @@ type
     LblResultJSONStat: TLabel;
     LblFileNameResultJSON: TLabel;
     LblAllUsers: TLabel;
+    LblStatUpdateCount: TLabel;
+    LblStatFilesCount: TLabel;
     PgCntrl: TPageControl;
     SpnEdtForumID1: TSpinEdit;
     SpnEdtForumID3: TSpinEdit;
@@ -50,6 +55,7 @@ type
     TabSheet2: TTabSheet;
     procedure Button1Click(Sender: TObject);
     procedure Button3Click(Sender: TObject);
+    procedure DrctryEdtStatChange(Sender: TObject);
     procedure FlNmEdtAllUsersChange(Sender: TObject);
     procedure FlNmEdtCuratorsFileChange(Sender: TObject);
     procedure FlNmEdtResultJSONChange(Sender: TObject);
@@ -75,28 +81,26 @@ var
 implementation
 
 uses
-  jsonparser, jsonscanner, StrUtils
+  jsonparser, jsonscanner, StrUtils, FileUtil
   ;
 
 {$R *.lfm}
 
 procedure ExtractFromMsg(aMsgObject: TJSONObject; out aID: Int64; out aName: String);
-var
-  aActorID: String;
 begin
-  aID:=0;
-  aName:=EmptyStr;
-  aActorID:=aMsgObject.Strings['from_id'];
-  if not aActorID.IsEmpty then
-    aID:=StrToInt64(RightStr(aActorID, Length(aActorID)-Length('user')));
-  aName:=aMsgObject.Strings['from'];
+  with aMsgObject.objects['from'] do
+  begin
+    aID:=Int64s['id'];
+    aName:=Strings['first_name']+' '+Strings['last_name'];
+  end;
 end;
 
 { TGroupUsers }
 
 procedure TGroupUsers.AddToUserList(aMsgObject: TJSONObject);
 begin
-  AddToUserList(aMsgObject.Strings['from'], aMsgObject.Strings['from_id'])
+  with aMsgObject.Objects['from'] do
+    AddToUserList(Strings['first_name']+' '+Get('last_name', EmptyStr), aMsgObject.objects['from'].Int64s['id'])
 end;
 
 procedure TGroupUsers.AddToUserList(const aName, aActorID: String);
@@ -194,6 +198,46 @@ begin
   end;  
   FFailedUsers.SaveList('~failed.csv');
   LblFailed.Caption:=Format('Failed users: %d', [FFailedUsers.Count]);
+end;
+
+procedure TFrmMain.DrctryEdtStatChange(Sender: TObject);
+var
+  aUpdateList, aFiles: TStringList;
+  aFile, aUpdate, s: String;
+begin
+  FreeAndNil(FJSONData);
+  LblStatUpdateCount.Caption:='--';
+  LblStatFilesCount.Caption:='--';
+  if DrctryEdtStat.Directory.IsEmpty then
+    Exit;
+  aFiles:=TStringList.Create;
+  FJSONData:=TJSONObject.Create(['updates', TJSONArray.Create]);
+  try
+    try
+      FindAllFiles(aFiles, DrctryEdtStat.Directory, '*.log');
+      for aFile in aFiles do
+      begin
+        aUpdateList:=TStringList.Create;
+        try
+          aUpdateList.LoadFromFile(aFile);
+          for s in aUpdateList do
+          begin
+            aUpdate:=Trim(Copy(s, 22, Length(s)-22+1));
+            FJSONData.Arrays['updates'].Add(GetJSON(aUpdate) as TJSONObject);
+          end;
+        finally
+          aUpdateList.Free;
+        end;
+      end;
+    finally                                                                                
+      LblStatFilesCount.Caption:=Format('Files: %d', [aFiles.Count]);
+      aFiles.Free;
+    end;
+    LblStatUpdateCount.Caption:=Format('Updates: %d', [FJSONData.Arrays['updates'].Count]);
+    ChckBxStatLogger.Checked:=True;
+  except
+    FreeAndNil(FJSONData);
+  end;
 end;
 
 procedure TFrmMain.Button1Click(Sender: TObject);
@@ -297,10 +341,11 @@ end;
 
 procedure TFrmMain.ParseCompleted(aTaskNum: Integer);
 var
-  aMessages: TJSONArray;
-  aMsg: TJSONEnum;
+  aUpdates: TJSONArray;
+  aUpdate: TJSONEnum;
   aMsgObject: TJSONObject;
   aMediaMsgUsers, aTxtMsgUsers: TGroupUsers;
+  aThreadID: Integer;
 
   procedure HandleMessage1;
   begin
@@ -343,23 +388,58 @@ var
       FCompletedUsers.AddToUserList(aMsgObject);
   end;
 
+  procedure HandleMessage3;
+  var
+    aID: Int64;
+    aName: String;
+    aTxtType: TJSONtype;
+    aIsTextExists: Boolean;
+  begin
+    if ChckBxStrictFilter.Checked then
+    begin
+      ExtractFromMsg(aMsgObject, aID, aName);
+      if (aMsgObject.Get('mime_type', EmptyStr)='video/mp4') or (aMsgObject.Get('photo', EmptyStr)<>EmptyStr) then
+      begin
+        if (aMediaMsgUsers.IndexOf(aID)>-1) or (aTxtMsgUsers.IndexOf(aID)>-1) then
+          FCompletedUsers.AddToUserList(aName, aID)
+        else
+          aMediaMsgUsers.AddToUserList(aName, aID);
+      end
+      else begin
+        aTxtType:=aMsgObject.Types['text'];
+        aIsTextExists:=(aTxtType=jtArray) or ((aTxtType=jtString) and (aMsgObject.Strings['text']<>EmptyStr));
+        if aIsTextExists then
+        begin
+          if aMediaMsgUsers.IndexOf(aID)>-1 then
+            FCompletedUsers.AddToUserList(aName, aID)
+          else
+            aTxtMsgUsers.AddToUserList(aName, aID);
+        end;
+      end;
+    end
+    else
+      FCompletedUsers.AddToUserList(aMsgObject);
+  end;
+
 begin
-  aMessages:=FJSONData.Arrays['messages'];
+  aThreadID:=ForumID(aTaskNum);
+  aUpdates:=FJSONData.Arrays['updates'];
   FCompletedUsers.Clear;
   aMediaMsgUsers:=TGroupUsers.Create;   
   aTxtMsgUsers:=TGroupUsers.Create;
   try
-    for aMsg in aMessages do
+    for aUpdate in aUpdates do
     begin
-      aMsgObject:=aMsg.Value as TJSONObject;
-      if (aMsgObject.Strings['type']='message') and (aMsgObject.Get('reply_to_message_id', 0)=ForumID(aTaskNum)) then
-      begin
-        case aTaskNum of
-          1: HandleMessage1;
-          2: HandleMessage2;
-        else
-          raise Exception.Create('Unknown task number!');
-        end;
+      if not (aUpdate.Value as TJSONObject).Find('message', aMsgObject) then
+        Continue;
+      if aMsgObject.Get('message_thread_id', 0)<>aThreadID then
+        COntinue;
+      case aTaskNum of
+        1: HandleMessage1;
+        2: HandleMessage2;
+        3: HandleMessage3;
+      else
+        raise Exception.Create('Unknown task number!');
       end;
     end;
     LblCompletedUsers.Caption:=Format('Completed users: %d', [FCompletedUsers.Count]);

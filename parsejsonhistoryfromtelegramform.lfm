@@ -1,0 +1,208 @@
+object FrmMain: TFrmMain
+  Left = 550
+  Height = 385
+  Top = 332
+  Width = 843
+  Caption = 'Telegram history parser'
+  ClientHeight = 385
+  ClientWidth = 843
+  DesignTimePPI = 120
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  SessionProperties = 'FlNmEdtResultJSON.FileName;FlNmEdtAllUsers.FileName;FlNmEdtCuratorsFile.FileName'
+  LCLVersion = '3.8.0.0'
+  object PgCntrl: TPageControl
+    Left = 0
+    Height = 385
+    Top = 0
+    Width = 843
+    ActivePage = TbShtMain
+    Align = alClient
+    TabIndex = 0
+    TabOrder = 0
+    object TbShtMain: TTabSheet
+      Caption = 'Main'
+      ClientHeight = 352
+      ClientWidth = 835
+      object FlNmEdtResultJSON: TFileNameEdit
+        Left = 16
+        Height = 28
+        Top = 32
+        Width = 472
+        Filter = '*.json'
+        FilterIndex = 0
+        DefaultExt = '.json'
+        HideDirectories = False
+        ButtonWidth = 29
+        NumGlyphs = 1
+        MaxLength = 0
+        TabOrder = 0
+        OnChange = FlNmEdtResultJSONChange
+      end
+      object LblFileNameResultJSON: TLabel
+        Left = 24
+        Height = 20
+        Top = 12
+        Width = 66
+        Caption = 'result.json'
+        FocusControl = FlNmEdtResultJSON
+      end
+      object LblResultJSONStat: TLabel
+        Left = 24
+        Height = 20
+        Top = 64
+        Width = 12
+        Caption = '--'
+      end
+      object FlNmEdtAllUsers: TFileNameEdit
+        Left = 16
+        Height = 28
+        Top = 108
+        Width = 470
+        Filter = '*.json'
+        FilterIndex = 0
+        DefaultExt = '.json'
+        HideDirectories = False
+        ButtonWidth = 29
+        NumGlyphs = 1
+        MaxLength = 0
+        TabOrder = 1
+        OnChange = FlNmEdtAllUsersChange
+      end
+      object LblFileNameAllUsers: TLabel
+        Left = 24
+        Height = 20
+        Top = 88
+        Width = 78
+        Caption = 'all users file'
+        FocusControl = FlNmEdtAllUsers
+      end
+      object LblAllUsers: TLabel
+        Left = 24
+        Height = 20
+        Top = 136
+        Width = 12
+        Caption = '--'
+      end
+      object Button3: TButton
+        Left = 56
+        Height = 31
+        Top = 296
+        Width = 240
+        Caption = 'Button3'
+        TabOrder = 2
+        OnClick = Button3Click
+      end
+      object LblCompletedUsers: TLabel
+        Left = 528
+        Height = 20
+        Top = 24
+        Width = 12
+        Caption = '--'
+      end
+      object FlNmEdtCuratorsFile: TFileNameEdit
+        Left = 16
+        Height = 28
+        Top = 180
+        Width = 470
+        Filter = '*.json'
+        FilterIndex = 0
+        DefaultExt = '.json'
+        HideDirectories = False
+        ButtonWidth = 29
+        NumGlyphs = 1
+        MaxLength = 0
+        TabOrder = 3
+        OnChange = FlNmEdtCuratorsFileChange
+      end
+      object LblFileNameCurators: TLabel
+        Left = 24
+        Height = 20
+        Top = 160
+        Width = 80
+        Caption = 'Curators file'
+        FocusControl = FlNmEdtCuratorsFile
+      end
+      object LblCurators: TLabel
+        Left = 24
+        Height = 20
+        Top = 208
+        Width = 12
+        Caption = '--'
+      end
+      object Button1: TButton
+        Left = 520
+        Height = 31
+        Top = 48
+        Width = 184
+        Caption = 'Parse result.json'
+        TabOrder = 4
+        OnClick = Button1Click
+      end
+      object SpnEdtTaskNum: TSpinEdit
+        Left = 728
+        Height = 28
+        Top = 48
+        Width = 88
+        TabOrder = 5
+        Value = 1
+      end
+      object LblFailed: TLabel
+        Left = 72
+        Height = 20
+        Top = 272
+        Width = 12
+        Caption = '--'
+      end
+      object ChckBxStrictFilter: TCheckBox
+        Left = 720
+        Height = 24
+        Top = 84
+        Width = 90
+        Caption = 'Strict filter'
+        TabOrder = 6
+      end
+    end
+    object TabSheet2: TTabSheet
+      Caption = 'Settings'
+      ClientHeight = 352
+      ClientWidth = 835
+      object SpnEdtForumID2: TSpinEdit
+        Left = 72
+        Height = 28
+        Top = 88
+        Width = 104
+        TabOrder = 0
+        Value = 1676
+      end
+      object LblForumID: TLabel
+        Left = 56
+        Height = 20
+        Top = 24
+        Width = 61
+        Caption = 'Forum ID'
+      end
+      object SpnEdtForumID1: TSpinEdit
+        Left = 72
+        Height = 28
+        Top = 56
+        Width = 104
+        TabOrder = 1
+        Value = 403
+      end
+      object SpnEdtForumID3: TSpinEdit
+        Left = 72
+        Height = 28
+        Top = 120
+        Width = 104
+        TabOrder = 2
+        Value = 1676
+      end
+    end
+  end
+  object IniPropStorage1: TIniPropStorage
+    StoredValues = <>
+    Left = 596
+    Top = 267
+  end
+end

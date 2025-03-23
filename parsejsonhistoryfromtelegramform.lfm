@@ -198,6 +198,50 @@ object FrmMain: TFrmMain
         TabOrder = 2
         Value = 1676
       end
+      object DateTimePicker2: TDateTimePicker
+        Left = 208
+        Height = 28
+        Top = 88
+        Width = 169
+        CenturyFrom = 1941
+        MaxDate = 2958465
+        MinDate = -53780
+        TabOrder = 3
+        TrailingSeparator = False
+        TextForNullDate = 'NULL'
+        LeadingZeros = True
+        Kind = dtkDateTime
+        TimeFormat = tf24
+        TimeDisplay = tdHMS
+        DateMode = dmComboBox
+        Date = 45729
+        Time = 0.458333333335759
+        UseDefaultSeparators = True
+        HideDateTimeParts = []
+        MonthNames = 'Long'
+      end
+      object DateTimePicker1: TDateTimePicker
+        Left = 208
+        Height = 28
+        Top = 56
+        Width = 169
+        CenturyFrom = 1941
+        MaxDate = 2958465
+        MinDate = -53780
+        TabOrder = 4
+        TrailingSeparator = False
+        TextForNullDate = 'NULL'
+        LeadingZeros = True
+        Kind = dtkDateTime
+        TimeFormat = tf24
+        TimeDisplay = tdHMS
+        DateMode = dmComboBox
+        Date = 45727
+        Time = 0.0416666666642413
+        UseDefaultSeparators = True
+        HideDateTimeParts = []
+        MonthNames = 'Long'
+      end
     end
   end
   object IniPropStorage1: TIniPropStorage

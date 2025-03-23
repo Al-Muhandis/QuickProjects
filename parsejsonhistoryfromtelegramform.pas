@@ -5,8 +5,8 @@ unit ParseJSONHistoryFromTelegramForm;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, EditBtn, StdCtrls, Spin, ComCtrls, IniPropStorage, fgl, fpjson,
-  eventlog
+  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, EditBtn, StdCtrls, Spin, ComCtrls, IniPropStorage,
+  DateTimePicker, fgl, fpjson, eventlog
   ;
 
 type
@@ -28,6 +28,8 @@ type
     Button1: TButton;
     Button3: TButton;
     ChckBxStrictFilter: TCheckBox;
+    DateTimePicker2: TDateTimePicker;
+    DateTimePicker1: TDateTimePicker;
     FlNmEdtCuratorsFile: TFileNameEdit;
     FlNmEdtResultJSON: TFileNameEdit;
     FlNmEdtAllUsers: TFileNameEdit;
@@ -60,7 +62,8 @@ type
     FJSONData: TJSONObject;
     FAllUsers: TGroupUsers;
     FLog: TEventLog;
-    function ForumID(aTaskNum: Byte): Integer;
+    function ForumID(aTaskNum: Byte): Integer;   
+    function ForumDeadLine(aTaskNum: Byte): Int64;
     procedure LoadUsers(aUsers: TGroupUsers; aLabel: TLabel; aFileNameEdit: TFileNameEdit);
     procedure ParseCompleted(aTaskNum: Integer);
   public
@@ -75,7 +78,7 @@ var
 implementation
 
 uses
-  jsonparser, jsonscanner, StrUtils
+  jsonparser, jsonscanner, StrUtils, DateUtils
   ;
 
 {$R *.lfm}
@@ -266,6 +269,17 @@ begin
   end;
 end;
 
+function TFrmMain.ForumDeadLine(aTaskNum: Byte): Int64;
+var
+  aDeadLine: TDateTime;
+begin
+  case aTaskNum of
+    1: aDeadLine:=DateTimePicker1.DateTime;
+    2: aDeadLine:=DateTimePicker2.DateTime;
+  end;
+  Result:=DateTimeToUnix(aDeadLine, False);
+end;
+
 procedure TFrmMain.LoadUsers(aUsers: TGroupUsers; aLabel: TLabel; aFileNameEdit: TFileNameEdit);
 var
   aStringList: TStringList;
@@ -300,7 +314,8 @@ var
   aMessages: TJSONArray;
   aMsg: TJSONEnum;
   aMsgObject: TJSONObject;
-  aMediaMsgUsers, aTxtMsgUsers: TGroupUsers;
+  aMediaMsgUsers, aTxtMsgUsers, aVideoUsers, aCreativeUsers: TGroupUsers;
+  aDeadLine: Int64;
 
   procedure HandleMessage1;
   begin
@@ -322,8 +337,14 @@ var
       ExtractFromMsg(aMsgObject, aID, aName);
       if (aMsgObject.Get('mime_type', EmptyStr)='video/mp4') or (aMsgObject.Get('photo', EmptyStr)<>EmptyStr) then
       begin
+        if (aMsgObject.Get('mime_type', EmptyStr)='video/mp4') then
+          aVideoUsers.AddToUserList(aMsgObject);
         if (aMediaMsgUsers.IndexOf(aID)>-1) or (aTxtMsgUsers.IndexOf(aID)>-1) then
-          FCompletedUsers.AddToUserList(aName, aID)
+        begin
+          FCompletedUsers.AddToUserList(aName, aID);
+          if aVideoUsers.IndexOf(aID)>-1 then
+            aCreativeUsers.AddToUserList(aMsgObject);
+        end
         else
           aMediaMsgUsers.AddToUserList(aName, aID);
       end
@@ -333,7 +354,11 @@ var
         if aIsTextExists then
         begin
           if aMediaMsgUsers.IndexOf(aID)>-1 then
-            FCompletedUsers.AddToUserList(aName, aID)
+          begin
+            FCompletedUsers.AddToUserList(aName, aID);
+            if aVideoUsers.IndexOf(aID)>-1 then
+              aCreativeUsers.AddToUserList(aMsgObject);
+          end
           else
             aTxtMsgUsers.AddToUserList(aName, aID);
         end;
@@ -346,14 +371,19 @@ var
 begin
   aMessages:=FJSONData.Arrays['messages'];
   FCompletedUsers.Clear;
-  aMediaMsgUsers:=TGroupUsers.Create;   
+  aMediaMsgUsers:=TGroupUsers.Create;
+  aVideoUsers:=TGroupUsers.Create;  
+  aCreativeUsers:=TGroupUsers.Create;
   aTxtMsgUsers:=TGroupUsers.Create;
+  aDeadLine:=ForumDeadLine(aTaskNum);
   try
     for aMsg in aMessages do
     begin
       aMsgObject:=aMsg.Value as TJSONObject;
       if (aMsgObject.Strings['type']='message') and (aMsgObject.Get('reply_to_message_id', 0)=ForumID(aTaskNum)) then
       begin
+        if aMsgObject.Int64s['date_unixtime']>=aDeadLine then
+          Continue;
         case aTaskNum of
           1: HandleMessage1;
           2: HandleMessage2;
@@ -363,8 +393,11 @@ begin
       end;
     end;
     LblCompletedUsers.Caption:=Format('Completed users: %d', [FCompletedUsers.Count]);
-    FCompletedUsers.SaveList('~completed.csv');
+    FCompletedUsers.SaveList('~completed.csv');          
+    aCreativeUsers.SaveList('~creativeusers.csv');
   finally
+    aCreativeUsers.Free;
+    aVideoUsers.Free;
     aTxtMsgUsers.Free;
     aMediaMsgUsers.Free;
   end;

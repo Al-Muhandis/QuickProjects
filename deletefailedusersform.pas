@@ -69,6 +69,7 @@ begin
   for s in aStringList do
   begin
     aID:=StrToInt64(ExtractDelimited(1, s, [' ', ',', ';']));
+    DTLongPollBot1.SenderBot.Token:=DTLongPollBot1.Token;
     DTLongPollBot1.SenderBot.banChatMember(SpnEdtExChatID.Value, aID);
     Memo2.Lines.Add(s);
   end;

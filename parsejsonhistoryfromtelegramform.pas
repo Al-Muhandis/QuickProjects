@@ -5,8 +5,8 @@ unit ParseJSONHistoryFromTelegramForm;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, EditBtn, StdCtrls, Spin, ComCtrls, IniPropStorage, fgl, fpjson,
-  eventlog
+  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, EditBtn, StdCtrls, Spin, ComCtrls, IniPropStorage,
+  DateTimePicker, fgl, fpjson, eventlog
   ;
 
 type
@@ -29,6 +29,8 @@ type
     Button3: TButton;
     ChckBxStrictFilter: TCheckBox;
     ChckBxStatLogger: TCheckBox;
+    DateTimePicker4: TDateTimePicker;
+    DateTimePicker3: TDateTimePicker;
     DrctryEdtStat: TDirectoryEdit;
     FlNmEdtCuratorsFile: TFileNameEdit;
     FlNmEdtResultJSON: TFileNameEdit;
@@ -49,6 +51,7 @@ type
     PgCntrl: TPageControl;
     SpnEdtForumID1: TSpinEdit;
     SpnEdtForumID3: TSpinEdit;
+    SpnEdtForumID4: TSpinEdit;
     SpnEdtTaskNum: TSpinEdit;
     SpnEdtForumID2: TSpinEdit;
     TbShtMain: TTabSheet;
@@ -66,7 +69,8 @@ type
     FJSONData: TJSONObject;
     FAllUsers: TGroupUsers;
     FLog: TEventLog;
-    function ForumID(aTaskNum: Byte): Integer;
+    function ForumID(aTaskNum: Byte): Integer; 
+    function ForumDeadLine(aTaskNum: Byte): Int64;
     procedure LoadUsers(aUsers: TGroupUsers; aLabel: TLabel; aFileNameEdit: TFileNameEdit);
     procedure ParseCompleted(aTaskNum: Integer);
   public
@@ -81,7 +85,7 @@ var
 implementation
 
 uses
-  jsonparser, jsonscanner, StrUtils, FileUtil
+  jsonparser, jsonscanner, StrUtils, FileUtil, DateUtils
   ;
 
 {$R *.lfm}
@@ -91,7 +95,7 @@ begin
   with aMsgObject.objects['from'] do
   begin
     aID:=Int64s['id'];
-    aName:=Strings['first_name']+' '+Strings['last_name'];
+    aName:=Strings['first_name']+' '+Get('last_name', EmptyStr);
   end;
 end;
 
@@ -305,9 +309,23 @@ begin
     1: Result:=SpnEdtForumID1.Value;
     2: Result:=SpnEdtForumID2.Value;
     3: Result:=SpnEdtForumID3.Value;
+    4: Result:=SpnEdtForumID4.Value;
   else
     raise Exception.Create(Format('Uknown task number %d', [aTaskNum]));
   end;
+end;
+
+function TFrmMain.ForumDeadLine(aTaskNum: Byte): Int64;
+var
+  aDeadLine: TDateTime;
+begin
+  case aTaskNum of
+    1: aDeadLine:=Now; 
+    2: aDeadLine:=Now;
+    3: aDeadLine:=DateTimePicker3.DateTime;
+    4: aDeadLine:=DateTimePicker4.DateTime;
+  end;
+  Result:=DateTimeToUnix(aDeadLine, False)
 end;
 
 procedure TFrmMain.LoadUsers(aUsers: TGroupUsers; aLabel: TLabel; aFileNameEdit: TFileNameEdit);
@@ -346,6 +364,7 @@ var
   aMsgObject: TJSONObject;
   aMediaMsgUsers, aTxtMsgUsers: TGroupUsers;
   aThreadID: Integer;
+  aDeadLine: Int64;
 
   procedure HandleMessage1;
   begin
@@ -392,13 +411,14 @@ var
   var
     aID: Int64;
     aName: String;
-    aTxtType: TJSONtype;
     aIsTextExists: Boolean;
   begin
     if ChckBxStrictFilter.Checked then
     begin
       ExtractFromMsg(aMsgObject, aID, aName);
-      if (aMsgObject.Get('mime_type', EmptyStr)='video/mp4') or (aMsgObject.Get('photo', EmptyStr)<>EmptyStr) then
+      if (aMsgObject.IndexOfName('video_note')>-1) or (aMsgObject.IndexOfName('audio')>-1) or
+        (aMsgObject.IndexOfName('voice')>-1) or (aMsgObject.IndexOfName('document')>-1) or
+        (aMsgObject.IndexOfName('video')>-1) or (aMsgObject.IndexOfName('photo')>-1) then
       begin
         if (aMediaMsgUsers.IndexOf(aID)>-1) or (aTxtMsgUsers.IndexOf(aID)>-1) then
           FCompletedUsers.AddToUserList(aName, aID)
@@ -406,8 +426,7 @@ var
           aMediaMsgUsers.AddToUserList(aName, aID);
       end
       else begin
-        aTxtType:=aMsgObject.Types['text'];
-        aIsTextExists:=(aTxtType=jtArray) or ((aTxtType=jtString) and (aMsgObject.Strings['text']<>EmptyStr));
+        aIsTextExists:=aMsgObject.IndexOfName('text')>-1;
         if aIsTextExists then
         begin
           if aMediaMsgUsers.IndexOf(aID)>-1 then
@@ -421,10 +440,29 @@ var
       FCompletedUsers.AddToUserList(aMsgObject);
   end;
 
+  procedure HandleMessage4;
+  var
+    aID: Int64;
+    aName: String;
+  begin
+    if ChckBxStrictFilter.Checked then
+    begin
+      ExtractFromMsg(aMsgObject, aID, aName);
+      if (aMsgObject.IndexOfName('video_note')>-1) or (aMsgObject.IndexOfName('audio')>-1) or
+        (aMsgObject.IndexOfName('voice')>-1) or (aMsgObject.IndexOfName('document')>-1) or
+        (aMsgObject.IndexOfName('video')>-1) or (aMsgObject.IndexOfName('photo')>-1) then
+        if aMsgObject.Int64s['date']<=aDeadLine then
+          FCompletedUsers.AddToUserList(aName, aID);
+    end
+    else
+      FCompletedUsers.AddToUserList(aMsgObject);
+  end;
+
 begin
   aThreadID:=ForumID(aTaskNum);
   aUpdates:=FJSONData.Arrays['updates'];
   FCompletedUsers.Clear;
+  aDeadLine:=ForumDeadLine(aTaskNum);
   aMediaMsgUsers:=TGroupUsers.Create;   
   aTxtMsgUsers:=TGroupUsers.Create;
   try
@@ -434,10 +472,13 @@ begin
         Continue;
       if aMsgObject.Get('message_thread_id', 0)<>aThreadID then
         COntinue;
+      if aMsgObject.Int64s['date']>aDeadLine then
+        Continue;
       case aTaskNum of
         1: HandleMessage1;
         2: HandleMessage2;
         3: HandleMessage3;
+        4: HandleMessage4;
       else
         raise Exception.Create('Unknown task number!');
       end;

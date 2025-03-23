@@ -16,9 +16,9 @@ object FrmMain: TFrmMain
     Height = 435
     Top = 0
     Width = 843
-    ActivePage = TbShtMain
+    ActivePage = TabSheet2
     Align = alClient
-    TabIndex = 0
+    TabIndex = 1
     TabOrder = 0
     object TbShtMain: TTabSheet
       Caption = 'Main'
@@ -238,6 +238,58 @@ object FrmMain: TFrmMain
         Width = 104
         TabOrder = 2
         Value = 3712
+      end
+      object SpnEdtForumID4: TSpinEdit
+        Left = 72
+        Height = 28
+        Top = 152
+        Width = 104
+        TabOrder = 3
+        Value = 4784
+      end
+      object DateTimePicker4: TDateTimePicker
+        Left = 208
+        Height = 28
+        Top = 152
+        Width = 169
+        CenturyFrom = 1941
+        MaxDate = 2958465
+        MinDate = -53780
+        TabOrder = 4
+        TrailingSeparator = False
+        TextForNullDate = 'NULL'
+        LeadingZeros = True
+        Kind = dtkDateTime
+        TimeFormat = tf24
+        TimeDisplay = tdHMS
+        DateMode = dmComboBox
+        Date = 45738
+        Time = 0.958333333335759
+        UseDefaultSeparators = True
+        HideDateTimeParts = []
+        MonthNames = 'Long'
+      end
+      object DateTimePicker3: TDateTimePicker
+        Left = 208
+        Height = 28
+        Top = 120
+        Width = 169
+        CenturyFrom = 1941
+        MaxDate = 2958465
+        MinDate = -53780
+        TabOrder = 5
+        TrailingSeparator = False
+        TextForNullDate = 'NULL'
+        LeadingZeros = True
+        Kind = dtkDateTime
+        TimeFormat = tf24
+        TimeDisplay = tdHMS
+        DateMode = dmComboBox
+        Date = 45734
+        Time = 0.833333333335759
+        UseDefaultSeparators = True
+        HideDateTimeParts = []
+        MonthNames = 'Long'
       end
     end
   end

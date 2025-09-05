@@ -7,18 +7,18 @@ object FrmMain: TFrmMain
   ClientHeight = 435
   ClientWidth = 843
   DesignTimePPI = 120
+  SessionProperties = 'ChckBxStatLogger.Checked;DrctryEdtStat.Directory;FlNmEdtAllUsers.FileName;FlNmEdtCuratorsFile.FileName;FlNmEdtResultJSON.FileName'
+  LCLVersion = '4.2.0.0'
   OnCreate = FormCreate
   OnDestroy = FormDestroy
-  SessionProperties = 'ChckBxStatLogger.Checked;DrctryEdtStat.Directory;FlNmEdtAllUsers.FileName;FlNmEdtCuratorsFile.FileName;FlNmEdtResultJSON.FileName'
-  LCLVersion = '3.8.0.0'
   object PgCntrl: TPageControl
     Left = 0
     Height = 435
     Top = 0
     Width = 843
-    ActivePage = TabSheet2
+    ActivePage = TbShtMain
     Align = alClient
-    TabIndex = 1
+    TabIndex = 0
     TabOrder = 0
     object TbShtMain: TTabSheet
       Caption = 'Main'

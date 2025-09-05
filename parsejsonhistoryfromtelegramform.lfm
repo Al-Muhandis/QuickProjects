@@ -42,8 +42,8 @@ object FrmMain: TFrmMain
         Left = 24
         Height = 20
         Top = 12
-        Width = 66
-        Caption = 'result.json'
+        Width = 63
+        Caption = 'users.json'
         FocusControl = FlNmEdtResultJSON
       end
       object LblResultJSONStat: TLabel
@@ -134,7 +134,7 @@ object FrmMain: TFrmMain
         Height = 31
         Top = 48
         Width = 184
-        Caption = 'Parse result.json'
+        Caption = 'Parse stat'
         TabOrder = 4
         OnClick = Button1Click
       end
@@ -214,7 +214,7 @@ object FrmMain: TFrmMain
         Top = 88
         Width = 104
         TabOrder = 0
-        Value = 1676
+        Value = 1456
       end
       object LblForumID: TLabel
         Left = 56
@@ -229,7 +229,7 @@ object FrmMain: TFrmMain
         Top = 56
         Width = 104
         TabOrder = 1
-        Value = 403
+        Value = 6
       end
       object SpnEdtForumID3: TSpinEdit
         Left = 72
@@ -286,6 +286,50 @@ object FrmMain: TFrmMain
         TimeDisplay = tdHMS
         DateMode = dmComboBox
         Date = 45734
+        Time = 0.833333333335759
+        UseDefaultSeparators = True
+        HideDateTimeParts = []
+        MonthNames = 'Long'
+      end
+      object DateTimePicker1: TDateTimePicker
+        Left = 208
+        Height = 28
+        Top = 56
+        Width = 169
+        CenturyFrom = 1941
+        MaxDate = 2958465
+        MinDate = -53780
+        TabOrder = 6
+        TrailingSeparator = False
+        TextForNullDate = 'NULL'
+        LeadingZeros = True
+        Kind = dtkDateTime
+        TimeFormat = tf24
+        TimeDisplay = tdHMS
+        DateMode = dmComboBox
+        Date = 45905
+        Time = 0.791666666664241
+        UseDefaultSeparators = True
+        HideDateTimeParts = []
+        MonthNames = 'Long'
+      end
+      object DateTimePicker2: TDateTimePicker
+        Left = 208
+        Height = 28
+        Top = 88
+        Width = 169
+        CenturyFrom = 1941
+        MaxDate = 2958465
+        MinDate = -53780
+        TabOrder = 7
+        TrailingSeparator = False
+        TextForNullDate = 'NULL'
+        LeadingZeros = True
+        Kind = dtkDateTime
+        TimeFormat = tf24
+        TimeDisplay = tdHMS
+        DateMode = dmComboBox
+        Date = 45905
         Time = 0.833333333335759
         UseDefaultSeparators = True
         HideDateTimeParts = []

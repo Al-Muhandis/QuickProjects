@@ -2,27 +2,27 @@ object Form1: TForm1
   Left = 316
   Height = 498
   Top = 154
-  Width = 713
+  Width = 943
   Caption = 'Form1'
   ClientHeight = 498
-  ClientWidth = 713
+  ClientWidth = 943
   DesignTimePPI = 120
-  OnCreate = FormCreate
   SessionProperties = 'DTLongPollBot1.Token;FlNmEdtUsers.FileName;SpnEdtExChatID.Value'
-  LCLVersion = '3.8.0.0'
+  LCLVersion = '4.2.0.0'
+  OnCreate = FormCreate
   object Memo1: TMemo
     Left = 23
     Height = 232
     Top = 240
-    Width = 305
+    Width = 489
     ScrollBars = ssVertical
     TabOrder = 0
   end
   object FlNmEdtUsers: TFileNameEdit
-    Left = 25
+    Left = 24
     Height = 28
     Top = 194
-    Width = 303
+    Width = 487
     FilterIndex = 0
     HideDirectories = False
     ButtonWidth = 29
@@ -39,7 +39,7 @@ object Form1: TForm1
     Caption = 'Users to delete'
   end
   object Button1: TButton
-    Left = 520
+    Left = 728
     Height = 31
     Top = 40
     Width = 174
@@ -48,7 +48,7 @@ object Form1: TForm1
     OnClick = Button1Click
   end
   object Memo2: TMemo
-    Left = 352
+    Left = 560
     Height = 385
     Top = 87
     Width = 352
@@ -68,6 +68,7 @@ object Form1: TForm1
     Top = 43
     Width = 193
     MaxLength = 0
+    SpinButtonWidth = 17
     TabOrder = 4
     NullValue = 0
     Value = 0

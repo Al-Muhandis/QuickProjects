@@ -29,8 +29,10 @@ type
     Button3: TButton;
     ChckBxStrictFilter: TCheckBox;
     ChckBxStatLogger: TCheckBox;
+    DateTimePicker2: TDateTimePicker;
     DateTimePicker4: TDateTimePicker;
     DateTimePicker3: TDateTimePicker;
+    DateTimePicker1: TDateTimePicker;
     DrctryEdtStat: TDirectoryEdit;
     FlNmEdtCuratorsFile: TFileNameEdit;
     FlNmEdtResultJSON: TFileNameEdit;
@@ -56,14 +58,14 @@ type
     SpnEdtForumID2: TSpinEdit;
     TbShtMain: TTabSheet;
     TabSheet2: TTabSheet;
-    procedure Button1Click(Sender: TObject);
-    procedure Button3Click(Sender: TObject);
-    procedure DrctryEdtStatChange(Sender: TObject);
-    procedure FlNmEdtAllUsersChange(Sender: TObject);
-    procedure FlNmEdtCuratorsFileChange(Sender: TObject);
-    procedure FlNmEdtResultJSONChange(Sender: TObject);
-    procedure FormCreate(Sender: TObject);
-    procedure FormDestroy(Sender: TObject);
+    procedure Button1Click({%H-}Sender: TObject);
+    procedure Button3Click({%H-}Sender: TObject);
+    procedure DrctryEdtStatChange({%H-}Sender: TObject);
+    procedure FlNmEdtAllUsersChange({%H-}Sender: TObject);
+    procedure FlNmEdtCuratorsFileChange({%H-}Sender: TObject);
+    procedure FlNmEdtResultJSONChange({%H-}Sender: TObject);
+    procedure FormCreate({%H-}Sender: TObject);
+    procedure FormDestroy({%H-}Sender: TObject);
   private
     FCompletedUsers, FFailedUsers, FCuratorsUsers: TGroupUsers;
     FJSONData: TJSONObject;
@@ -200,7 +202,7 @@ begin
       else
         FLog.Warning('#%d: %s', [aID, aName]);
   end;  
-  FFailedUsers.SaveList('~failed.csv');
+  FFailedUsers.SaveList(Format('~failed%d.csv', [SpnEdtTaskNum.Value]));
   LblFailed.Caption:=Format('Failed users: %d', [FFailedUsers.Count]);
 end;
 
@@ -262,8 +264,8 @@ end;
 procedure TFrmMain.FlNmEdtResultJSONChange(Sender: TObject);
 var
   aStringList: TStringList;
+  aJSONData: TJSONObject;
 begin
-  FreeAndNil(FJSONData);
   LblResultJSONStat.Caption:='--';
   if FlNmEdtResultJSON.FileName.IsEmpty then
     Exit;
@@ -271,10 +273,10 @@ begin
   try
     aStringList.LoadFromFile(FlNmEdtResultJSON.FileName);
     try
-      FJSONData:=GetJSON(aStringList.Text) as TJSONObject;
-      LblResultJSONStat.Caption:=Format('Messages: %d', [FJSONData.Arrays['messages'].Count]);
+      aJSONData:=GetJSON(aStringList.Text) as TJSONObject;
+      LblResultJSONStat.Caption:=Format('Rows: %d', [FJSONData.Arrays['rows'].Count]);
     except
-      FreeAndNil(FJSONData);
+      FreeAndNil(aJSONData);
     end;
   finally
     aStringList.Free;
@@ -320,8 +322,8 @@ var
   aDeadLine: TDateTime;
 begin
   case aTaskNum of
-    1: aDeadLine:=Now; 
-    2: aDeadLine:=Now;
+    1: aDeadLine:=DateTimePicker1.DateTime;
+    2: aDeadLine:=DateTimePicker2.DateTime;
     3: aDeadLine:=DateTimePicker3.DateTime;
     4: aDeadLine:=DateTimePicker4.DateTime;
   end;
@@ -367,33 +369,45 @@ var
   aDeadLine: Int64;
 
   procedure HandleMessage1;
+  var
+    aID: Int64;
+    aName: String;
   begin
-    if (aTaskNum=1) and (aMsgObject.Get('mime_type', EmptyStr)<>'video/mp4') then
-      Exit;
-    FCompletedUsers.AddToUserList(aMsgObject);
+    if ChckBxStrictFilter.Checked then
+    begin
+      ExtractFromMsg(aMsgObject, aID, aName);
+      if (aMsgObject.IndexOfName('video_note')>-1) or (aMsgObject.IndexOfName('audio')>-1) or
+        (aMsgObject.IndexOfName('voice')>-1) or (aMsgObject.IndexOfName('document')>-1) or
+        (aMsgObject.IndexOfName('video')>-1) or (aMsgObject.IndexOfName('photo')>-1) then
+        if aMsgObject.Int64s['date']<=aDeadLine then
+          FCompletedUsers.AddToUserList(aName, aID);
+    end
+    else
+      FCompletedUsers.AddToUserList(aMsgObject);
   end;
 
   procedure HandleMessage2;
   var
     aID: Int64;
     aName: String;
-    aTxtType: TJSONtype;
     aIsTextExists: Boolean;
   begin
-    //aUpdateID:=aMsgObject.Int64s['id'];
     if ChckBxStrictFilter.Checked then
     begin
       ExtractFromMsg(aMsgObject, aID, aName);
-      if (aMsgObject.Get('mime_type', EmptyStr)='video/mp4') or (aMsgObject.Get('photo', EmptyStr)<>EmptyStr) then
+      if aID=1418031847 then
+        FLog.Debug(aMsgObject.AsJSON);
+      if (aMsgObject.IndexOfName('video_note')>-1) or (aMsgObject.IndexOfName('audio')>-1) or
+        (aMsgObject.IndexOfName('voice')>-1) or (aMsgObject.IndexOfName('document')>-1) or
+        (aMsgObject.IndexOfName('video')>-1) or (aMsgObject.IndexOfName('photo')>-1) then
       begin
-        if (aMediaMsgUsers.IndexOf(aID)>-1) or (aTxtMsgUsers.IndexOf(aID)>-1) then
+        if (aTxtMsgUsers.IndexOf(aID)>-1) or (aMsgObject.IndexOfName('caption')>-1) then
           FCompletedUsers.AddToUserList(aName, aID)
         else
           aMediaMsgUsers.AddToUserList(aName, aID);
       end
       else begin
-        aTxtType:=aMsgObject.Types['text'];
-        aIsTextExists:=(aTxtType=jtArray) or ((aTxtType=jtString) and (aMsgObject.Strings['text']<>EmptyStr));
+        aIsTextExists:=aMsgObject.IndexOfName('text')>-1;
         if aIsTextExists then
         begin
           if aMediaMsgUsers.IndexOf(aID)>-1 then
@@ -484,7 +498,7 @@ begin
       end;
     end;
     LblCompletedUsers.Caption:=Format('Completed users: %d', [FCompletedUsers.Count]);
-    FCompletedUsers.SaveList('~completed.csv');
+    FCompletedUsers.SaveList(Format('~completed%d.csv', [aTaskNum]));
   finally
     aTxtMsgUsers.Free;
     aMediaMsgUsers.Free;

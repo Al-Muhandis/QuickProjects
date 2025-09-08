@@ -237,7 +237,7 @@ object FrmMain: TFrmMain
         Top = 120
         Width = 104
         TabOrder = 2
-        Value = 3712
+        Value = 2367
       end
       object SpnEdtForumID4: TSpinEdit
         Left = 72
@@ -285,7 +285,7 @@ object FrmMain: TFrmMain
         TimeFormat = tf24
         TimeDisplay = tdHMS
         DateMode = dmComboBox
-        Date = 45734
+        Date = 45908
         Time = 0.833333333335759
         UseDefaultSeparators = True
         HideDateTimeParts = []

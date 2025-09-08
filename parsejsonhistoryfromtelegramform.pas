@@ -395,8 +395,6 @@ var
     if ChckBxStrictFilter.Checked then
     begin
       ExtractFromMsg(aMsgObject, aID, aName);
-      if aID=1418031847 then
-        FLog.Debug(aMsgObject.AsJSON);
       if (aMsgObject.IndexOfName('video_note')>-1) or (aMsgObject.IndexOfName('audio')>-1) or
         (aMsgObject.IndexOfName('voice')>-1) or (aMsgObject.IndexOfName('document')>-1) or
         (aMsgObject.IndexOfName('video')>-1) or (aMsgObject.IndexOfName('photo')>-1) then
@@ -425,30 +423,12 @@ var
   var
     aID: Int64;
     aName: String;
-    aIsTextExists: Boolean;
   begin
     if ChckBxStrictFilter.Checked then
     begin
       ExtractFromMsg(aMsgObject, aID, aName);
-      if (aMsgObject.IndexOfName('video_note')>-1) or (aMsgObject.IndexOfName('audio')>-1) or
-        (aMsgObject.IndexOfName('voice')>-1) or (aMsgObject.IndexOfName('document')>-1) or
-        (aMsgObject.IndexOfName('video')>-1) or (aMsgObject.IndexOfName('photo')>-1) then
-      begin
-        if (aMediaMsgUsers.IndexOf(aID)>-1) or (aTxtMsgUsers.IndexOf(aID)>-1) then
-          FCompletedUsers.AddToUserList(aName, aID)
-        else
-          aMediaMsgUsers.AddToUserList(aName, aID);
-      end
-      else begin
-        aIsTextExists:=aMsgObject.IndexOfName('text')>-1;
-        if aIsTextExists then
-        begin
-          if aMediaMsgUsers.IndexOf(aID)>-1 then
-            FCompletedUsers.AddToUserList(aName, aID)
-          else
-            aTxtMsgUsers.AddToUserList(aName, aID);
-        end;
-      end;
+      if (aMsgObject.IndexOfName('photo')>-1) then
+        FCompletedUsers.AddToUserList(aName, aID)
     end
     else
       FCompletedUsers.AddToUserList(aMsgObject);

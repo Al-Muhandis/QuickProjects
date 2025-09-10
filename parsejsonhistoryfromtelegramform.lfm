@@ -245,7 +245,7 @@ object FrmMain: TFrmMain
         Top = 152
         Width = 104
         TabOrder = 3
-        Value = 4784
+        Value = 2777
       end
       object DateTimePicker4: TDateTimePicker
         Left = 208
@@ -263,8 +263,8 @@ object FrmMain: TFrmMain
         TimeFormat = tf24
         TimeDisplay = tdHMS
         DateMode = dmComboBox
-        Date = 45738
-        Time = 0.958333333335759
+        Date = 45910
+        Time = 0.833333333335759
         UseDefaultSeparators = True
         HideDateTimeParts = []
         MonthNames = 'Long'

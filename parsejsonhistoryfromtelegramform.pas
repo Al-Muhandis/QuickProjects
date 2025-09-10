@@ -442,11 +442,8 @@ var
     if ChckBxStrictFilter.Checked then
     begin
       ExtractFromMsg(aMsgObject, aID, aName);
-      if (aMsgObject.IndexOfName('video_note')>-1) or (aMsgObject.IndexOfName('audio')>-1) or
-        (aMsgObject.IndexOfName('voice')>-1) or (aMsgObject.IndexOfName('document')>-1) or
-        (aMsgObject.IndexOfName('video')>-1) or (aMsgObject.IndexOfName('photo')>-1) then
-        if aMsgObject.Int64s['date']<=aDeadLine then
-          FCompletedUsers.AddToUserList(aName, aID);
+      if (aMsgObject.IndexOfName('video')>-1) or (aMsgObject.IndexOfName('document')>-1) then
+        FCompletedUsers.AddToUserList(aName, aID)
     end
     else
       FCompletedUsers.AddToUserList(aMsgObject);

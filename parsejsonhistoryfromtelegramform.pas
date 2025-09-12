@@ -449,6 +449,12 @@ var
       FCompletedUsers.AddToUserList(aMsgObject);
   end;
 
+  function ExtractMessage(aUpdate: TJSONData; out aMsgObject: TJSONObject): Boolean;
+  begin
+    with aUpdate as TJSONObject do
+      Result:=Find('message', aMsgObject) or Find('edited_message', aMsgObject);
+  end;
+
 begin
   aThreadID:=ForumID(aTaskNum);
   aUpdates:=FJSONData.Arrays['updates'];
@@ -459,7 +465,7 @@ begin
   try
     for aUpdate in aUpdates do
     begin
-      if not (aUpdate.Value as TJSONObject).Find('message', aMsgObject) then
+      if not ExtractMessage(aUpdate.Value, aMsgObject) then
         Continue;
       if aMsgObject.Get('message_thread_id', 0)<>aThreadID then
         COntinue;

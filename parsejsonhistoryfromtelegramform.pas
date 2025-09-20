@@ -33,6 +33,7 @@ type
     DateTimePicker4: TDateTimePicker;
     DateTimePicker3: TDateTimePicker;
     DateTimePicker1: TDateTimePicker;
+    DateTimePicker5: TDateTimePicker;
     DrctryEdtStat: TDirectoryEdit;
     FlNmEdtCuratorsFile: TFileNameEdit;
     FlNmEdtResultJSON: TFileNameEdit;
@@ -54,6 +55,7 @@ type
     SpnEdtForumID1: TSpinEdit;
     SpnEdtForumID3: TSpinEdit;
     SpnEdtForumID4: TSpinEdit;
+    SpnEdtForumID5: TSpinEdit;
     SpnEdtTaskNum: TSpinEdit;
     SpnEdtForumID2: TSpinEdit;
     TbShtMain: TTabSheet;
@@ -312,6 +314,7 @@ begin
     2: Result:=SpnEdtForumID2.Value;
     3: Result:=SpnEdtForumID3.Value;
     4: Result:=SpnEdtForumID4.Value;
+    5: Result:=SpnEdtForumID5.Value
   else
     raise Exception.Create(Format('Uknown task number %d', [aTaskNum]));
   end;
@@ -326,6 +329,7 @@ begin
     2: aDeadLine:=DateTimePicker2.DateTime;
     3: aDeadLine:=DateTimePicker3.DateTime;
     4: aDeadLine:=DateTimePicker4.DateTime;
+    5: aDeadLine:=DateTimePicker5.DateTime;
   end;
   Result:=DateTimeToUnix(aDeadLine, False)
 end;
@@ -364,7 +368,7 @@ var
   aUpdates: TJSONArray;
   aUpdate: TJSONEnum;
   aMsgObject: TJSONObject;
-  aMediaMsgUsers, aTxtMsgUsers: TGroupUsers;
+  aMediaMsgUsers, aTxtMsgUsers, aVideoNotes, aPhotoMsgUsers: TGroupUsers;
   aThreadID: Integer;
   aDeadLine: Int64;
 
@@ -449,6 +453,27 @@ var
       FCompletedUsers.AddToUserList(aMsgObject);
   end;
 
+  procedure HandleMessage5;
+  var
+    aID: Int64;
+    aName: String;
+  begin
+    if ChckBxStrictFilter.Checked then
+    begin
+      ExtractFromMsg(aMsgObject, aID, aName);
+      if (aMsgObject.IndexOfName('video_note')>-1) then
+        aVideoNotes.AddToUserList(aName, aID);
+      if (aMsgObject.IndexOfName('video')>-1) then
+        aMediaMsgUsers.AddToUserList(aName, aID);
+      if (aMsgObject.IndexOfName('photo')>-1) then
+        aPhotoMsgUsers.AddToUserList(aName, aID);
+      if (aMediaMsgUsers.IndexOf(aID)>-1) and (aPhotoMsgUsers.IndexOf(aID)>-1) and (aVideoNotes.IndexOf(aID)>-1) then
+        FCompletedUsers.AddToUserList(aMsgObject);
+    end
+    else
+      FCompletedUsers.AddToUserList(aMsgObject);
+  end;
+
   function ExtractMessage(aUpdate: TJSONData; out aMsgObject: TJSONObject): Boolean;
   begin
     with aUpdate as TJSONObject do
@@ -460,8 +485,10 @@ begin
   aUpdates:=FJSONData.Arrays['updates'];
   FCompletedUsers.Clear;
   aDeadLine:=ForumDeadLine(aTaskNum);
+  aVideoNotes:=TGroupUsers.Create;
   aMediaMsgUsers:=TGroupUsers.Create;   
   aTxtMsgUsers:=TGroupUsers.Create;
+  aPhotoMsgUsers:=TGroupUsers.Create;
   try
     for aUpdate in aUpdates do
     begin
@@ -476,6 +503,7 @@ begin
         2: HandleMessage2;
         3: HandleMessage3;
         4: HandleMessage4;
+        5: HandleMessage5;
       else
         raise Exception.Create('Unknown task number!');
       end;
@@ -485,6 +513,8 @@ begin
   finally
     aTxtMsgUsers.Free;
     aMediaMsgUsers.Free;
+    aVideoNotes.Free;
+    aPhotoMsgUsers.Free;
   end;
 end;
 

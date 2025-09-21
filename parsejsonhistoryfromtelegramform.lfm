@@ -365,6 +365,44 @@ object FrmMain: TFrmMain
         HideDateTimeParts = []
         MonthNames = 'Long'
       end
+      object SpnEdtForumID8: TSpinEdit
+        Left = 72
+        Height = 28
+        Top = 240
+        Width = 104
+        TabOrder = 10
+        Value = 4300
+      end
+      object DateTimePicker8: TDateTimePicker
+        Left = 208
+        Height = 28
+        Top = 240
+        Width = 169
+        CenturyFrom = 1941
+        MaxDate = 2958465
+        MinDate = -53780
+        TabOrder = 11
+        TrailingSeparator = False
+        TextForNullDate = 'NULL'
+        LeadingZeros = True
+        Kind = dtkDateTime
+        TimeFormat = tf24
+        TimeDisplay = tdHMS
+        DateMode = dmComboBox
+        Date = 45919
+        Time = 0.833333333335759
+        UseDefaultSeparators = True
+        HideDateTimeParts = []
+        MonthNames = 'Long'
+      end
+      object Lbl8: TLabel
+        Left = 51
+        Height = 20
+        Top = 242
+        Width = 8
+        Alignment = taRightJustify
+        Caption = '8'
+      end
     end
   end
   object IniPropStorage1: TIniPropStorage

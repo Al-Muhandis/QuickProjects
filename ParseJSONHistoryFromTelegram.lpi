@@ -102,6 +102,9 @@
     </RunParams>
     <RequiredPackages>
       <Item>
+        <PackageName Value="fptelegram"/>
+      </Item>
+      <Item>
         <PackageName Value="DateTimeCtrlsDsgn"/>
       </Item>
       <Item>

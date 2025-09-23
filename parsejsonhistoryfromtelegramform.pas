@@ -5,11 +5,13 @@ unit ParseJSONHistoryFromTelegramForm;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, EditBtn, StdCtrls, Spin, ComCtrls, IniPropStorage,
+  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, EditBtn, StdCtrls, Spin, ComCtrls, IniPropStorage, ExtCtrls,
   DateTimePicker, fgl, fpjson, eventlog
   ;
 
 type
+  TTaskMessageType = (tmtNone, tmtText, tmtPhoto, tmtVideo, tmtAudio, tmtVoice, tmtVideoNote, tmtDocument); 
+  TTaskMessageSet = set of TTaskMessageType;
 
   { TGroupUsers }
 
@@ -29,17 +31,23 @@ type
     Button3: TButton;
     ChckBxStrictFilter: TCheckBox;
     ChckBxStatLogger: TCheckBox;
+    ChckBxSIngleGroup: TCheckBox;
+    ChckGrpMediaTypes: TCheckGroup;
     DateTimePicker2: TDateTimePicker;
     DateTimePicker4: TDateTimePicker;
     DateTimePicker3: TDateTimePicker;
     DateTimePicker1: TDateTimePicker;
     DateTimePicker5: TDateTimePicker;
     DateTimePicker8: TDateTimePicker;
+    DateTimePickerN: TDateTimePicker;
+    DateTimePicker9: TDateTimePicker;
     DrctryEdtStat: TDirectoryEdit;
     FlNmEdtCuratorsFile: TFileNameEdit;
     FlNmEdtResultJSON: TFileNameEdit;
     FlNmEdtAllUsers: TFileNameEdit;
     IniPropStorage1: TIniPropStorage;
+    Lbl9: TLabel;
+    LblTopicID: TLabel;
     Lbl8: TLabel;
     LblStat: TLabel;
     LblFailed: TLabel;
@@ -53,12 +61,15 @@ type
     LblAllUsers: TLabel;
     LblStatUpdateCount: TLabel;
     LblStatFilesCount: TLabel;
+    LblTopicID1: TLabel;
     PgCntrl: TPageControl;
     SpnEdtForumID1: TSpinEdit;
     SpnEdtForumID3: TSpinEdit;
     SpnEdtForumID4: TSpinEdit;
     SpnEdtForumID5: TSpinEdit;
     SpnEdtForumID8: TSpinEdit;
+    SpnEdtForumIDN: TSpinEdit;
+    SpnEdtForumID9: TSpinEdit;
     SpnEdtTaskNum: TSpinEdit;
     SpnEdtForumID2: TSpinEdit;
     TbShtMain: TTabSheet;
@@ -80,6 +91,8 @@ type
     function ForumDeadLine(aTaskNum: Byte): Int64;
     procedure LoadUsers(aUsers: TGroupUsers; aLabel: TLabel; aFileNameEdit: TFileNameEdit);
     procedure ParseCompleted(aTaskNum: Integer);
+    procedure UpdateCheckGroupMedias;           
+    function GetCheckGroupMedias: TTaskMessageSet;
   public
 
   end;
@@ -92,8 +105,12 @@ var
 implementation
 
 uses
-  jsonparser, jsonscanner, StrUtils, FileUtil, DateUtils
+  jsonparser, jsonscanner, StrUtils, FileUtil, DateUtils, tgtypes
   ;
+
+const
+  _MediaTypeNames: array [TTaskMessageType] of String = ('', 'text', 'photo', 'video', 'audio', 'voice',
+    'video_note', 'document');
 
 {$R *.lfm}
 
@@ -298,6 +315,7 @@ begin
   FLog:=TEventLog.Create(Self);
   FLog.LogType:=ltFile;
   FLog.FileName:=ChangeFileExt(ApplicationName, '.log');
+  UpdateCheckGroupMedias;
 end;
 
 procedure TFrmMain.FormDestroy(Sender: TObject);
@@ -312,30 +330,38 @@ end;
 
 function TFrmMain.ForumID(aTaskNum: Byte): Integer;
 begin
-  case aTaskNum of
-    1: Result:=SpnEdtForumID1.Value;
-    2: Result:=SpnEdtForumID2.Value;
-    3: Result:=SpnEdtForumID3.Value;
-    4: Result:=SpnEdtForumID4.Value;
-    5: Result:=SpnEdtForumID5.Value;
-    8: Result:=SpnEdtForumID8.Value;
+  if ChckBxSIngleGroup.Checked then
+    Result:=SpnEdtForumIDN.Value
   else
-    raise Exception.Create(Format('Uknown task number %d', [aTaskNum]));
-  end;
+    case aTaskNum of
+      1: Result:=SpnEdtForumID1.Value;
+      2: Result:=SpnEdtForumID2.Value;
+      3: Result:=SpnEdtForumID3.Value;
+      4: Result:=SpnEdtForumID4.Value;
+      5: Result:=SpnEdtForumID5.Value;
+      8: Result:=SpnEdtForumID8.Value;  
+      9: Result:=SpnEdtForumID9.Value;
+    else
+      raise Exception.Create(Format('Uknown task number %d', [aTaskNum]));
+    end;
 end;
 
 function TFrmMain.ForumDeadLine(aTaskNum: Byte): Int64;
 var
   aDeadLine: TDateTime;
 begin
-  case aTaskNum of
-    1: aDeadLine:=DateTimePicker1.DateTime;
-    2: aDeadLine:=DateTimePicker2.DateTime;
-    3: aDeadLine:=DateTimePicker3.DateTime;
-    4: aDeadLine:=DateTimePicker4.DateTime;
-    5: aDeadLine:=DateTimePicker5.DateTime;
-    8: aDeadLine:=DateTimePicker8.DateTime;
-  end;
+  if ChckBxSIngleGroup.Checked then
+    aDeadLine:=DateTimePickerN.DateTime
+  else
+    case aTaskNum of
+      1: aDeadLine:=DateTimePicker1.DateTime;
+      2: aDeadLine:=DateTimePicker2.DateTime;
+      3: aDeadLine:=DateTimePicker3.DateTime;
+      4: aDeadLine:=DateTimePicker4.DateTime;
+      5: aDeadLine:=DateTimePicker5.DateTime;
+      8: aDeadLine:=DateTimePicker8.DateTime;
+      9: aDeadLine:=DateTimePicker9.DateTime;
+    end;
   Result:=DateTimeToUnix(aDeadLine, False)
 end;
 
@@ -373,9 +399,21 @@ var
   aUpdates: TJSONArray;
   aUpdate: TJSONEnum;
   aMsgObject: TJSONObject;
-  aMediaMsgUsers, aTxtMsgUsers, aVideoNotes, aPhotoMsgUsers: TGroupUsers;
+  aMediaMsgUsers, aTxtMsgUsers, aVideoNotes, aPhotoMsgUsers, aVideos: TGroupUsers;
   aThreadID: Integer;
   aDeadLine: Int64;
+
+  function GetListFromMedia(aMedia: TTaskMessageType): TGroupUsers;
+  begin
+    case aMedia of
+      tmtText:      Result:=aTxtMsgUsers;
+      tmtPhoto:     Result:=aPhotoMsgUsers;
+      tmtVideo:     Result:=aVideos;
+      tmtVideoNote: Result:=aVideoNotes;
+    else
+      Result:=nil;
+    end;
+  end;
 
   procedure HandleMessage1;
   var
@@ -507,6 +545,55 @@ var
       FCompletedUsers.AddToUserList(aMsgObject);
   end;
 
+  procedure HandleMessage9;
+  var
+    aID: Int64;
+    aName: String;
+  begin
+    if ChckBxStrictFilter.Checked then
+    begin
+      ExtractFromMsg(aMsgObject, aID, aName);
+      if (aMsgObject.IndexOfName('photo')>-1) then
+        aPhotoMsgUsers.AddToUserList(aName, aID);
+      if (aMsgObject.IndexOfName('video')>-1) then
+        aVideos.AddToUserList(aName, aID);
+
+      if (aPhotoMsgUsers.IndexOf(aID)>-1) and (aVideos.IndexOf(aID)>-1) then
+        FCompletedUsers.AddToUserList(aMsgObject);
+    end
+    else
+      FCompletedUsers.AddToUserList(aMsgObject);
+  end;
+
+  procedure HandleMessageN;
+  var
+    aID: Int64;
+    aName: String;
+    aMSet: TTaskMessageSet;
+    m: TTaskMessageType;
+    aAddToList: Boolean;
+  begin
+    if ChckBxStrictFilter.Checked then
+    begin
+      ExtractFromMsg(aMsgObject, aID, aName);
+      aMSet:=GetCheckGroupMedias;
+      aAddToList:=True;
+      for m in aMSet do
+      begin
+        if m in aMSet then
+        begin
+          if (aMsgObject.IndexOfName(_MediaTypeNames[m])>-1) then
+            GetListFromMedia(m).AddToUserList(aName, aID);
+          aAddToList:=aAddToList and (GetListFromMedia(m).IndexOf(aID)>-1);
+        end;
+      end;
+      if aAddToList then
+        FCompletedUsers.AddToUserList(aMsgObject);
+    end
+    else
+      FCompletedUsers.AddToUserList(aMsgObject);
+  end;
+
   function ExtractMessage(aUpdate: TJSONData; out aMsgObject: TJSONObject): Boolean;
   begin
     with aUpdate as TJSONObject do
@@ -522,6 +609,7 @@ begin
   aMediaMsgUsers:=TGroupUsers.Create;   
   aTxtMsgUsers:=TGroupUsers.Create;
   aPhotoMsgUsers:=TGroupUsers.Create;
+  aVideos:=TGroupUsers.Create;
   try
     for aUpdate in aUpdates do
     begin
@@ -531,25 +619,48 @@ begin
         COntinue;
       if aMsgObject.Int64s['date']>aDeadLine then
         Continue;
-      case aTaskNum of
-        1: HandleMessage1;
-        2: HandleMessage2;
-        3: HandleMessage3;
-        4: HandleMessage4;
-        5: HandleMessage5;
-        8: HandleMessage8;
+      if ChckBxSIngleGroup.Checked then
+        HandleMessageN
       else
-        raise Exception.Create('Unknown task number!');
-      end;
+        case aTaskNum of
+          1: HandleMessage1;
+          2: HandleMessage2;
+          3: HandleMessage3;
+          4: HandleMessage4;
+          5: HandleMessage5;
+          8: HandleMessage8; 
+          9: HandleMessage9;
+        else
+          raise Exception.Create('Unknown task number!');
+        end;
     end;
     LblCompletedUsers.Caption:=Format('Completed users: %d', [FCompletedUsers.Count]);
     FCompletedUsers.SaveList(Format('~completed%d.csv', [aTaskNum]));
   finally
+    aVideos.Free;
     aTxtMsgUsers.Free;
     aMediaMsgUsers.Free;
     aVideoNotes.Free;
     aPhotoMsgUsers.Free;
   end;
+end;
+
+procedure TFrmMain.UpdateCheckGroupMedias;
+var
+  m: String;
+begin
+  for m in _MediaTypeNames do
+    ChckGrpMediaTypes.Items.Add(m);
+end;
+
+function TFrmMain.GetCheckGroupMedias: TTaskMessageSet;
+var
+  m: TTaskMessageType;
+begin
+  Result:=[];
+  for m in TTaskMessageType do
+    if ChckGrpMediaTypes.Checked[Ord(m)] then
+      Include(Result, m);
 end;
 
 end.

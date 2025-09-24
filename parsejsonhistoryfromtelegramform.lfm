@@ -2,10 +2,10 @@ object FrmMain: TFrmMain
   Left = 550
   Height = 540
   Top = 227
-  Width = 843
+  Width = 888
   Caption = 'Telegram history parser'
   ClientHeight = 540
-  ClientWidth = 843
+  ClientWidth = 888
   DesignTimePPI = 120
   SessionProperties = 'ChckBxStatLogger.Checked;DrctryEdtStat.Directory;FlNmEdtAllUsers.FileName;FlNmEdtCuratorsFile.FileName;FlNmEdtResultJSON.FileName'
   LCLVersion = '4.2.0.0'
@@ -15,7 +15,7 @@ object FrmMain: TFrmMain
     Left = 0
     Height = 540
     Top = 0
-    Width = 843
+    Width = 888
     ActivePage = TbShtMain
     Align = alClient
     TabIndex = 0
@@ -23,7 +23,7 @@ object FrmMain: TFrmMain
     object TbShtMain: TTabSheet
       Caption = 'Main'
       ClientHeight = 507
-      ClientWidth = 835
+      ClientWidth = 880
       object FlNmEdtResultJSON: TFileNameEdit
         Left = 16
         Height = 28
@@ -209,7 +209,7 @@ object FrmMain: TFrmMain
         Top = 152
         Width = 104
         TabOrder = 9
-        Value = 4627
+        Value = 4823
       end
       object DateTimePickerN: TDateTimePicker
         Left = 656
@@ -227,7 +227,7 @@ object FrmMain: TFrmMain
         TimeFormat = tf24
         TimeDisplay = tdHMS
         DateMode = dmComboBox
-        Date = 45922
+        Date = 45924
         Time = 0.833333333335759
         UseDefaultSeparators = True
         HideDateTimeParts = []
@@ -255,29 +255,24 @@ object FrmMain: TFrmMain
         Caption = 'Turn on single comtrol pair'
         TabOrder = 11
       end
-      object ChckGrpMediaTypes: TCheckGroup
-        Left = 514
-        Height = 195
-        Top = 250
-        Width = 312
-        AutoFill = True
-        Caption = 'Media types'
-        ChildSizing.LeftRightSpacing = 6
-        ChildSizing.TopBottomSpacing = 6
-        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
-        ChildSizing.EnlargeVertical = crsHomogenousChildResize
-        ChildSizing.ShrinkHorizontal = crsScaleChilds
-        ChildSizing.ShrinkVertical = crsScaleChilds
-        ChildSizing.Layout = cclLeftToRightThenTopToBottom
-        ChildSizing.ControlsPerLine = 2
-        Columns = 2
+      object VlLstEdtrMediaTypes: TValueListEditor
+        Left = 520
+        Height = 256
+        Top = 232
+        Width = 344
+        RowCount = 2
         TabOrder = 12
+        OnValidateEntry = VlLstEdtrMediaTypesValidateEntry
+        ColWidths = (
+          80
+          260
+        )
       end
     end
     object TabSheet2: TTabSheet
       Caption = 'Settings'
       ClientHeight = 507
-      ClientWidth = 835
+      ClientWidth = 880
       object SpnEdtForumID2: TSpinEdit
         Left = 72
         Height = 28

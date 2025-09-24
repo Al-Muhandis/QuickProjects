@@ -6,19 +6,23 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, EditBtn, StdCtrls, Spin, ComCtrls, IniPropStorage, ExtCtrls,
-  DateTimePicker, fgl, fpjson, eventlog
+  ValEdit, DateTimePicker, fgl, fpjson, eventlog, Grids
   ;
 
 type
   TTaskMessageType = (tmtNone, tmtText, tmtPhoto, tmtVideo, tmtAudio, tmtVoice, tmtVideoNote, tmtDocument); 
   TTaskMessageSet = set of TTaskMessageType;
 
+  TUserDataRec = record
+    Name: String;
+    Count: Integer;
+  end;
+
   { TGroupUsers }
 
-  TGroupUsers = class(specialize TFPGMap<Int64, String>)
-  private
-    procedure AddToUserList(const aName, aActorID: String);
-  public                                                     
+  TGroupUsers = class(specialize TFPGMap<Int64, TUserDataRec>)
+  public
+    function GetCount(aID: Int64): Integer;
     procedure AddToUserList(aMsgObject: TJSONObject);
     procedure AddToUserList(const aName: String; aUserID: Int64);
     procedure SaveList(const aFileName: String);
@@ -32,7 +36,6 @@ type
     ChckBxStrictFilter: TCheckBox;
     ChckBxStatLogger: TCheckBox;
     ChckBxSIngleGroup: TCheckBox;
-    ChckGrpMediaTypes: TCheckGroup;
     DateTimePicker2: TDateTimePicker;
     DateTimePicker4: TDateTimePicker;
     DateTimePicker3: TDateTimePicker;
@@ -74,6 +77,7 @@ type
     SpnEdtForumID2: TSpinEdit;
     TbShtMain: TTabSheet;
     TabSheet2: TTabSheet;
+    VlLstEdtrMediaTypes: TValueListEditor;
     procedure Button1Click({%H-}Sender: TObject);
     procedure Button3Click({%H-}Sender: TObject);
     procedure DrctryEdtStatChange({%H-}Sender: TObject);
@@ -82,6 +86,8 @@ type
     procedure FlNmEdtResultJSONChange({%H-}Sender: TObject);
     procedure FormCreate({%H-}Sender: TObject);
     procedure FormDestroy({%H-}Sender: TObject);
+    procedure VlLstEdtrMediaTypesValidateEntry({%H-}Sender: TObject; {%H-}aCol, {%H-}aRow: Integer; const OldValue: string;
+      var NewValue: String);
   private
     FCompletedUsers, FFailedUsers, FCuratorsUsers: TGroupUsers;
     FJSONData: TJSONObject;
@@ -89,12 +95,14 @@ type
     FLog: TEventLog;
     function ForumID(aTaskNum: Byte): Integer; 
     function ForumDeadLine(aTaskNum: Byte): Int64;
+    function GetMediaCount(i: TTaskMessageType): Integer;
     procedure LoadUsers(aUsers: TGroupUsers; aLabel: TLabel; aFileNameEdit: TFileNameEdit);
     procedure ParseCompleted(aTaskNum: Integer);
+    procedure SetMediaCount(i: TTaskMessageType; AValue: Integer);
     procedure UpdateCheckGroupMedias;           
     function GetCheckGroupMedias: TTaskMessageSet;
   public
-
+    property MediaCount [i: TTaskMessageType]: Integer read GetMediaCount write SetMediaCount;
   end;
 
 
@@ -125,30 +133,41 @@ end;
 
 { TGroupUsers }
 
+function TGroupUsers.GetCount(aID: Int64): Integer;
+var
+  aIndex: Integer;
+begin
+  aIndex:=IndexOf(aID);
+  if aIndex=-1 then
+    Exit(0);
+  Result:=Data[aIndex].Count;
+end;
+
 procedure TGroupUsers.AddToUserList(aMsgObject: TJSONObject);
 begin
   with aMsgObject.Objects['from'] do
     AddToUserList(Strings['first_name']+' '+Get('last_name', EmptyStr), aMsgObject.objects['from'].Int64s['id'])
 end;
 
-procedure TGroupUsers.AddToUserList(const aName, aActorID: String);
-var
-  aUserID: Int64;
-begin
-  if aActorID.StartsWith('channel') then
-    Exit;
-  if not aActorID.IsEmpty then
-    aUserID:=StrToInt64(RightStr(aActorID, Length(aActorID)-Length('user')))
-  else
-    aUserID:=0;
-  AddToUserList(aName, aUserID);
-end;
-
 procedure TGroupUsers.AddToUserList(const aName: String; aUserID: Int64);
+var
+  aData: TUserDataRec;
+  aIndex: Integer;
 begin
-  if (aUserID<>0) and (Self.IndexOf(aUserID)>-1) then
+  if aUserID=0 then
     Exit;
-  Self.Add(aUserID, aName);
+  aIndex:=IndexOf(aUserID);
+  if aIndex>-1 then
+  begin
+    aData:=Data[aIndex];
+    Inc(aData.Count);
+    Data[aIndex]:=aData;
+  end
+  else begin
+    aData.Name:=aName;
+    aData.Count:=1;
+    Add(aUserID, aData);
+  end;
 end;
 
 procedure TGroupUsers.SaveList(const aFileName: String);
@@ -159,7 +178,7 @@ begin
   aCSV:=TStringList.Create;
   try
     for i:=0 to Self.Count-1 do
-      aCSV.Add(Format('%d; %s', [Keys[i], Data[i]]));
+      aCSV.Add(Format('%d; %s', [Keys[i], Data[i].Name]));
     aCSV.Sort;
     aCSV.SaveToFile(aFileName);
   finally
@@ -216,7 +235,7 @@ begin
   for i:=0 to FAllUsers.Count-1 do
   begin
     aID:=FAllUsers.Keys[i];
-    aName:=FAllUsers.Data[i];
+    aName:=FAllUsers.Data[i].Name;
     aFound:=FCompletedUsers.IndexOf(aID)>-1;
     if not aFound then
       if FCuratorsUsers.IndexOf(aID)=-1 then
@@ -328,6 +347,19 @@ begin
   FJSONData.Free;
 end;
 
+procedure TFrmMain.VlLstEdtrMediaTypesValidateEntry(Sender: TObject; aCol, aRow: Integer; const OldValue: string;
+  var NewValue: String);
+var
+  TempInt: Longint;
+begin
+  if not TryStrToInt(Trim(NewValue), TempInt) then
+  begin
+    NewValue:=OldValue;
+    raise Exception.Create('Введите целое число');
+  end;
+  NewValue:=TempInt.ToString;
+end;
+
 function TFrmMain.ForumID(aTaskNum: Byte): Integer;
 begin
   if ChckBxSIngleGroup.Checked then
@@ -363,6 +395,11 @@ begin
       9: aDeadLine:=DateTimePicker9.DateTime;
     end;
   Result:=DateTimeToUnix(aDeadLine, False)
+end;
+
+function TFrmMain.GetMediaCount(i: TTaskMessageType): Integer;
+begin
+  Result:=StrToInt(VlLstEdtrMediaTypes.Cells[1, Ord(i)]);
 end;
 
 procedure TFrmMain.LoadUsers(aUsers: TGroupUsers; aLabel: TLabel; aFileNameEdit: TFileNameEdit);
@@ -584,7 +621,7 @@ var
         begin
           if (aMsgObject.IndexOfName(_MediaTypeNames[m])>-1) then
             GetListFromMedia(m).AddToUserList(aName, aID);
-          aAddToList:=aAddToList and (GetListFromMedia(m).IndexOf(aID)>-1);
+          aAddToList:=aAddToList and (GetListFromMedia(m).GetCount(aID)>=MediaCount[m]);
         end;
       end;
       if aAddToList then
@@ -645,22 +682,35 @@ begin
   end;
 end;
 
+procedure TFrmMain.SetMediaCount(i: TTaskMessageType; AValue: Integer);
+begin
+  VlLstEdtrMediaTypes.Cells[1, Ord(i)]:=AValue.ToString;
+end;
+
 procedure TFrmMain.UpdateCheckGroupMedias;
 var
-  m: String;
+  i: TTaskMessageType;
 begin
-  for m in _MediaTypeNames do
-    ChckGrpMediaTypes.Items.Add(m);
+  VlLstEdtrMediaTypes.RowCount:=Length(_MediaTypeNames);
+  for i:=Succ(Low(_MediaTypeNames)) to High(_MediaTypeNames) do
+  begin
+    VlLstEdtrMediaTypes.Cells[0, Ord(i)]:=_MediaTypeNames[i];
+    VlLstEdtrMediaTypes.Cells[1, Ord(i)]:='0';
+  end;
 end;
 
 function TFrmMain.GetCheckGroupMedias: TTaskMessageSet;
 var
   m: TTaskMessageType;
+  aCount: LongInt;
 begin
   Result:=[];
   for m in TTaskMessageType do
-    if ChckGrpMediaTypes.Checked[Ord(m)] then
+  begin
+    aCount:=StrToIntDef(VlLstEdtrMediaTypes.Cells[1, Ord(m)], 0);
+    if aCount>0 then
       Include(Result, m);
+  end;
 end;
 
 end.

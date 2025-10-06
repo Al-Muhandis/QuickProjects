@@ -1,10 +1,10 @@
 object FrmMain: TFrmMain
   Left = 550
-  Height = 540
-  Top = 227
+  Height = 614
+  Top = 153
   Width = 888
   Caption = 'Telegram history parser'
-  ClientHeight = 540
+  ClientHeight = 614
   ClientWidth = 888
   DesignTimePPI = 120
   SessionProperties = 'ChckBxStatLogger.Checked;DrctryEdtStat.Directory;FlNmEdtAllUsers.FileName;FlNmEdtCuratorsFile.FileName;FlNmEdtResultJSON.FileName'
@@ -13,7 +13,7 @@ object FrmMain: TFrmMain
   OnDestroy = FormDestroy
   object PgCntrl: TPageControl
     Left = 0
-    Height = 540
+    Height = 614
     Top = 0
     Width = 888
     ActivePage = TbShtMain
@@ -22,7 +22,7 @@ object FrmMain: TFrmMain
     TabOrder = 0
     object TbShtMain: TTabSheet
       Caption = 'Main'
-      ClientHeight = 507
+      ClientHeight = 581
       ClientWidth = 880
       object FlNmEdtResultJSON: TFileNameEdit
         Left = 16
@@ -209,7 +209,7 @@ object FrmMain: TFrmMain
         Top = 152
         Width = 104
         TabOrder = 9
-        Value = 4823
+        Value = 569
       end
       object DateTimePickerN: TDateTimePicker
         Left = 656
@@ -227,7 +227,7 @@ object FrmMain: TFrmMain
         TimeFormat = tf24
         TimeDisplay = tdHMS
         DateMode = dmComboBox
-        Date = 45924
+        Date = 45936
         Time = 0.833333333335759
         UseDefaultSeparators = True
         HideDateTimeParts = []
@@ -250,15 +250,17 @@ object FrmMain: TFrmMain
       object ChckBxSIngleGroup: TCheckBox
         Left = 563
         Height = 24
-        Top = 192
-        Width = 200
-        Caption = 'Turn on single comtrol pair'
+        Top = 248
+        Width = 195
+        Caption = 'Turn on single control pair'
+        Checked = True
+        State = cbChecked
         TabOrder = 11
       end
       object VlLstEdtrMediaTypes: TValueListEditor
         Left = 520
-        Height = 256
-        Top = 232
+        Height = 280
+        Top = 296
         Width = 344
         RowCount = 2
         TabOrder = 12
@@ -268,10 +270,28 @@ object FrmMain: TFrmMain
           260
         )
       end
+      object LblGroupID: TLabel
+        Left = 530
+        Height = 20
+        Top = 184
+        Width = 60
+        Caption = 'Group ID'
+      end
+      object SpnEdtGroupID: TSpinEditEx
+        Left = 520
+        Height = 28
+        Top = 208
+        Width = 184
+        MaxLength = 0
+        SpinButtonWidth = 21
+        TabOrder = 13
+        NullValue = 0
+        Value = -1003101298658
+      end
     end
     object TabSheet2: TTabSheet
       Caption = 'Settings'
-      ClientHeight = 507
+      ClientHeight = 581
       ClientWidth = 880
       object SpnEdtForumID2: TSpinEdit
         Left = 72

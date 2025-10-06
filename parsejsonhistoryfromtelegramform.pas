@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, EditBtn, StdCtrls, Spin, ComCtrls, IniPropStorage, ExtCtrls,
-  ValEdit, DateTimePicker, fgl, fpjson, eventlog, Grids
+  ValEdit, DateTimePicker, SpinEx, fgl, fpjson, eventlog, Grids
   ;
 
 type
@@ -65,7 +65,9 @@ type
     LblStatUpdateCount: TLabel;
     LblStatFilesCount: TLabel;
     LblTopicID1: TLabel;
+    LblGroupID: TLabel;
     PgCntrl: TPageControl;
+    SpnEdtGroupID: TSpinEditEx;
     SpnEdtForumID1: TSpinEdit;
     SpnEdtForumID3: TSpinEdit;
     SpnEdtForumID4: TSpinEdit;
@@ -93,7 +95,8 @@ type
     FJSONData: TJSONObject;
     FAllUsers: TGroupUsers;
     FLog: TEventLog;
-    function ForumID(aTaskNum: Byte): Integer; 
+    function ForumID(aTaskNum: Byte): Integer;
+    function GroupID: Int64;
     function ForumDeadLine(aTaskNum: Byte): Int64;
     function GetMediaCount(i: TTaskMessageType): Integer;
     procedure LoadUsers(aUsers: TGroupUsers; aLabel: TLabel; aFileNameEdit: TFileNameEdit);
@@ -378,6 +381,11 @@ begin
     end;
 end;
 
+function TFrmMain.GroupID: Int64;
+begin
+  Result:=SpnEdtGroupID.Value;
+end;
+
 function TFrmMain.ForumDeadLine(aTaskNum: Byte): Int64;
 var
   aDeadLine: TDateTime;
@@ -438,7 +446,7 @@ var
   aMsgObject: TJSONObject;
   aMediaMsgUsers, aTxtMsgUsers, aVideoNotes, aPhotoMsgUsers, aVideos: TGroupUsers;
   aThreadID: Integer;
-  aDeadLine: Int64;
+  aDeadLine, aGroupID: Int64;
 
   function GetListFromMedia(aMedia: TTaskMessageType): TGroupUsers;
   begin
@@ -639,6 +647,7 @@ var
 
 begin
   aThreadID:=ForumID(aTaskNum);
+  aGroupID:=GroupID;
   aUpdates:=FJSONData.Arrays['updates'];
   FCompletedUsers.Clear;
   aDeadLine:=ForumDeadLine(aTaskNum);
@@ -651,6 +660,8 @@ begin
     for aUpdate in aUpdates do
     begin
       if not ExtractMessage(aUpdate.Value, aMsgObject) then
+        Continue;
+      if aMsgObject.Objects['chat'].Int64s['id']<>aGroupID then
         Continue;
       if aMsgObject.Get('message_thread_id', 0)<>aThreadID then
         COntinue;

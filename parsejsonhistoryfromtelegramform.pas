@@ -444,7 +444,7 @@ var
   aUpdates: TJSONArray;
   aUpdate: TJSONEnum;
   aMsgObject: TJSONObject;
-  aMediaMsgUsers, aTxtMsgUsers, aVideoNotes, aPhotoMsgUsers, aVideos: TGroupUsers;
+  aMediaMsgUsers, aTxtMsgUsers, aVideoNotes, aPhotoMsgUsers, aVideos, aDocuments: TGroupUsers;
   aThreadID: Integer;
   aDeadLine, aGroupID: Int64;
 
@@ -455,6 +455,7 @@ var
       tmtPhoto:     Result:=aPhotoMsgUsers;
       tmtVideo:     Result:=aVideos;
       tmtVideoNote: Result:=aVideoNotes;
+      tmtDocument:  Result:=aDocuments;
     else
       Result:=nil;
     end;
@@ -656,6 +657,7 @@ begin
   aTxtMsgUsers:=TGroupUsers.Create;
   aPhotoMsgUsers:=TGroupUsers.Create;
   aVideos:=TGroupUsers.Create;
+  aDocuments:=TGroupUsers.Create;
   try
     for aUpdate in aUpdates do
     begin
@@ -685,6 +687,7 @@ begin
     LblCompletedUsers.Caption:=Format('Completed users: %d', [FCompletedUsers.Count]);
     FCompletedUsers.SaveList(Format('~completed%d.csv', [aTaskNum]));
   finally
+    aDocuments.Free;
     aVideos.Free;
     aTxtMsgUsers.Free;
     aMediaMsgUsers.Free;

@@ -7,7 +7,7 @@ object FrmMain: TFrmMain
   ClientHeight = 614
   ClientWidth = 888
   DesignTimePPI = 120
-  SessionProperties = 'ChckBxStatLogger.Checked;DrctryEdtStat.Directory;FlNmEdtAllUsers.FileName;FlNmEdtCuratorsFile.FileName;FlNmEdtResultJSON.FileName'
+  SessionProperties = 'ChckBxStatLogger.Checked;DrctryEdtStat.Directory;FlNmEdtAllUsers.FileName;FlNmEdtCuratorsFile.FileName;FlNmEdtResultJSON.FileName;SpnEdtForumIDN.Value;SpnEdtGroupID.Value;DateTimePickerN.Date;DateTimePickerN.Time'
   LCLVersion = '4.2.0.0'
   OnCreate = FormCreate
   OnDestroy = FormDestroy

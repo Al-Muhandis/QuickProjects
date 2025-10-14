@@ -35,30 +35,19 @@ type
     Button3: TButton;
     ChckBxStrictFilter: TCheckBox;
     ChckBxStatLogger: TCheckBox;
-    ChckBxSIngleGroup: TCheckBox;
-    DateTimePicker2: TDateTimePicker;
-    DateTimePicker4: TDateTimePicker;
-    DateTimePicker3: TDateTimePicker;
-    DateTimePicker1: TDateTimePicker;
-    DateTimePicker5: TDateTimePicker;
-    DateTimePicker8: TDateTimePicker;
     DateTimePickerN: TDateTimePicker;
-    DateTimePicker9: TDateTimePicker;
     DrctryEdtStat: TDirectoryEdit;
     FlNmEdtCuratorsFile: TFileNameEdit;
     FlNmEdtResultJSON: TFileNameEdit;
     FlNmEdtAllUsers: TFileNameEdit;
     IniPropStorage1: TIniPropStorage;
-    Lbl9: TLabel;
     LblTopicID: TLabel;
-    Lbl8: TLabel;
     LblStat: TLabel;
     LblFailed: TLabel;
     LblCurators: TLabel;
     LblCompletedUsers: TLabel;
     LblFileNameAllUsers: TLabel;
     LblFileNameCurators: TLabel;
-    LblForumID: TLabel;
     LblResultJSONStat: TLabel;
     LblFileNameResultJSON: TLabel;
     LblAllUsers: TLabel;
@@ -67,18 +56,11 @@ type
     LblTopicID1: TLabel;
     LblGroupID: TLabel;
     PgCntrl: TPageControl;
+    RdGrpTaskNumFilter: TRadioGroup;
     SpnEdtGroupID: TSpinEditEx;
-    SpnEdtForumID1: TSpinEdit;
-    SpnEdtForumID3: TSpinEdit;
-    SpnEdtForumID4: TSpinEdit;
-    SpnEdtForumID5: TSpinEdit;
-    SpnEdtForumID8: TSpinEdit;
     SpnEdtForumIDN: TSpinEdit;
-    SpnEdtForumID9: TSpinEdit;
     SpnEdtTaskNum: TSpinEdit;
-    SpnEdtForumID2: TSpinEdit;
     TbShtMain: TTabSheet;
-    TabSheet2: TTabSheet;
     VlLstEdtrMediaTypes: TValueListEditor;
     procedure Button1Click({%H-}Sender: TObject);
     procedure Button3Click({%H-}Sender: TObject);
@@ -365,20 +347,7 @@ end;
 
 function TFrmMain.ForumID(aTaskNum: Byte): Integer;
 begin
-  if ChckBxSIngleGroup.Checked then
-    Result:=SpnEdtForumIDN.Value
-  else
-    case aTaskNum of
-      1: Result:=SpnEdtForumID1.Value;
-      2: Result:=SpnEdtForumID2.Value;
-      3: Result:=SpnEdtForumID3.Value;
-      4: Result:=SpnEdtForumID4.Value;
-      5: Result:=SpnEdtForumID5.Value;
-      8: Result:=SpnEdtForumID8.Value;  
-      9: Result:=SpnEdtForumID9.Value;
-    else
-      raise Exception.Create(Format('Uknown task number %d', [aTaskNum]));
-    end;
+  Result:=SpnEdtForumIDN.Value
 end;
 
 function TFrmMain.GroupID: Int64;
@@ -390,18 +359,7 @@ function TFrmMain.ForumDeadLine(aTaskNum: Byte): Int64;
 var
   aDeadLine: TDateTime;
 begin
-  if ChckBxSIngleGroup.Checked then
-    aDeadLine:=DateTimePickerN.DateTime
-  else
-    case aTaskNum of
-      1: aDeadLine:=DateTimePicker1.DateTime;
-      2: aDeadLine:=DateTimePicker2.DateTime;
-      3: aDeadLine:=DateTimePicker3.DateTime;
-      4: aDeadLine:=DateTimePicker4.DateTime;
-      5: aDeadLine:=DateTimePicker5.DateTime;
-      8: aDeadLine:=DateTimePicker8.DateTime;
-      9: aDeadLine:=DateTimePicker9.DateTime;
-    end;
+  aDeadLine:=DateTimePickerN.DateTime;
   Result:=DateTimeToUnix(aDeadLine, False)
 end;
 
@@ -447,6 +405,7 @@ var
   aMediaMsgUsers, aTxtMsgUsers, aVideoNotes, aPhotoMsgUsers, aVideos, aDocuments: TGroupUsers;
   aThreadID: Integer;
   aDeadLine, aGroupID: Int64;
+  aTxt: String;
 
   function GetListFromMedia(aMedia: TTaskMessageType): TGroupUsers;
   begin
@@ -459,156 +418,6 @@ var
     else
       Result:=nil;
     end;
-  end;
-
-  procedure HandleMessage1;
-  var
-    aID: Int64;
-    aName: String;
-  begin
-    if ChckBxStrictFilter.Checked then
-    begin
-      ExtractFromMsg(aMsgObject, aID, aName);
-      if (aMsgObject.IndexOfName('video_note')>-1) or (aMsgObject.IndexOfName('audio')>-1) or
-        (aMsgObject.IndexOfName('voice')>-1) or (aMsgObject.IndexOfName('document')>-1) or
-        (aMsgObject.IndexOfName('video')>-1) or (aMsgObject.IndexOfName('photo')>-1) then
-        if aMsgObject.Int64s['date']<=aDeadLine then
-          FCompletedUsers.AddToUserList(aName, aID);
-    end
-    else
-      FCompletedUsers.AddToUserList(aMsgObject);
-  end;
-
-  procedure HandleMessage2;
-  var
-    aID: Int64;
-    aName: String;
-    aIsTextExists: Boolean;
-  begin
-    if ChckBxStrictFilter.Checked then
-    begin
-      ExtractFromMsg(aMsgObject, aID, aName);
-      if (aMsgObject.IndexOfName('video_note')>-1) or (aMsgObject.IndexOfName('audio')>-1) or
-        (aMsgObject.IndexOfName('voice')>-1) or (aMsgObject.IndexOfName('document')>-1) or
-        (aMsgObject.IndexOfName('video')>-1) or (aMsgObject.IndexOfName('photo')>-1) then
-      begin
-        if (aTxtMsgUsers.IndexOf(aID)>-1) or (aMsgObject.IndexOfName('caption')>-1) then
-          FCompletedUsers.AddToUserList(aName, aID)
-        else
-          aMediaMsgUsers.AddToUserList(aName, aID);
-      end
-      else begin
-        aIsTextExists:=aMsgObject.IndexOfName('text')>-1;
-        if aIsTextExists then
-        begin
-          if aMediaMsgUsers.IndexOf(aID)>-1 then
-            FCompletedUsers.AddToUserList(aName, aID)
-          else
-            aTxtMsgUsers.AddToUserList(aName, aID);
-        end;
-      end;
-    end
-    else
-      FCompletedUsers.AddToUserList(aMsgObject);
-  end;
-
-  procedure HandleMessage3;
-  var
-    aID: Int64;
-    aName: String;
-  begin
-    if ChckBxStrictFilter.Checked then
-    begin
-      ExtractFromMsg(aMsgObject, aID, aName);
-      if (aMsgObject.IndexOfName('photo')>-1) then
-        FCompletedUsers.AddToUserList(aName, aID)
-    end
-    else
-      FCompletedUsers.AddToUserList(aMsgObject);
-  end;
-
-  procedure HandleMessage4;
-  var
-    aID: Int64;
-    aName: String;
-  begin
-    if ChckBxStrictFilter.Checked then
-    begin
-      ExtractFromMsg(aMsgObject, aID, aName);
-      if (aMsgObject.IndexOfName('video')>-1) or (aMsgObject.IndexOfName('document')>-1) then
-        FCompletedUsers.AddToUserList(aName, aID)
-    end
-    else
-      FCompletedUsers.AddToUserList(aMsgObject);
-  end;
-
-  procedure HandleMessage5;
-  var
-    aID: Int64;
-    aName: String;
-  begin
-    if ChckBxStrictFilter.Checked then
-    begin
-      ExtractFromMsg(aMsgObject, aID, aName);
-      if (aMsgObject.IndexOfName('video_note')>-1) then
-        aVideoNotes.AddToUserList(aName, aID);
-      if (aMsgObject.IndexOfName('video')>-1) then
-        aMediaMsgUsers.AddToUserList(aName, aID);
-      if (aMsgObject.IndexOfName('photo')>-1) then
-        aPhotoMsgUsers.AddToUserList(aName, aID);
-      if (aMediaMsgUsers.IndexOf(aID)>-1) and (aPhotoMsgUsers.IndexOf(aID)>-1) and (aVideoNotes.IndexOf(aID)>-1) then
-        FCompletedUsers.AddToUserList(aMsgObject);
-    end
-    else
-      FCompletedUsers.AddToUserList(aMsgObject);
-  end;
-
-  procedure HandleMessage8;
-  var
-    aID: Int64;
-    aName: String;
-  begin
-    if ChckBxStrictFilter.Checked then
-    begin
-      ExtractFromMsg(aMsgObject, aID, aName);
-      if (aMsgObject.IndexOfName('voice')>-1) then
-        aMediaMsgUsers.AddToUserList(aName, aID);
-      if (aMsgObject.IndexOfName('text')>-1) then
-        aTxtMsgUsers.AddToUserList(aName, aID);
-      if (aMsgObject.IndexOfName('photo')>-1) then
-      begin
-        if aPhotoMsgUsers.IndexOf(aID)>-1 then
-          aTxtMsgUsers.AddToUserList(aName, aID)
-        else
-          aPhotoMsgUsers.AddToUserList(aName, aID);
-      end;
-      if (aMediaMsgUsers.IndexOf(aID)>-1) and (aPhotoMsgUsers.IndexOf(aID)>-1) and (aTxtMsgUsers.IndexOf(aID)>-1) then
-        FCompletedUsers.AddToUserList(aMsgObject);
-      if (aMediaMsgUsers.IndexOf(aID)>-1) and (aPhotoMsgUsers.IndexOf(aID)>-1) and (aVideoNotes.IndexOf(aID)>-1) then
-        FCompletedUsers.AddToUserList(aMsgObject);
-    end
-    else
-      FCompletedUsers.AddToUserList(aMsgObject);
-  end;
-
-  procedure HandleMessage9;
-  var
-    aID: Int64;
-    aName: String;
-  begin
-    if ChckBxStrictFilter.Checked then
-    begin
-      ExtractFromMsg(aMsgObject, aID, aName);
-      if (aMsgObject.IndexOfName('photo')>-1) then
-        aPhotoMsgUsers.AddToUserList(aName, aID);
-      if (aMsgObject.IndexOfName('video')>-1) then
-        aVideos.AddToUserList(aName, aID);
-
-      if (aPhotoMsgUsers.IndexOf(aID)>-1) and (aVideos.IndexOf(aID)>-1) then
-        FCompletedUsers.AddToUserList(aMsgObject);
-    end
-    else
-      FCompletedUsers.AddToUserList(aMsgObject);
   end;
 
   procedure HandleMessageN;
@@ -665,24 +474,23 @@ begin
         Continue;
       if aMsgObject.Objects['chat'].Int64s['id']<>aGroupID then
         Continue;
-      if aMsgObject.Get('message_thread_id', 0)<>aThreadID then
-        COntinue;
+      if RdGrpTaskNumFilter.ItemIndex=0 then
+      begin
+        if aMsgObject.Get('message_thread_id', 0)<>aThreadID then
+          COntinue;
+      end
+      else begin
+        aTxt:=aMsgObject.Get('text', EmptyStr);
+        if aTxt.IsEmpty then
+          aTxt:=aMsgObject.Get('caption', EmptyStr);
+        if aTxt.IsEmpty then
+          Continue;
+        if Pos('#'+SpnEdtTaskNum.Value.ToString, aTxt)=0 then
+          COntinue;
+      end;
       if aMsgObject.Int64s['date']>aDeadLine then
         Continue;
-      if ChckBxSIngleGroup.Checked then
-        HandleMessageN
-      else
-        case aTaskNum of
-          1: HandleMessage1;
-          2: HandleMessage2;
-          3: HandleMessage3;
-          4: HandleMessage4;
-          5: HandleMessage5;
-          8: HandleMessage8; 
-          9: HandleMessage9;
-        else
-          raise Exception.Create('Unknown task number!');
-        end;
+      HandleMessageN
     end;
     LblCompletedUsers.Caption:=Format('Completed users: %d', [FCompletedUsers.Count]);
     FCompletedUsers.SaveList(Format('~completed%d.csv', [aTaskNum]));

@@ -14,6 +14,7 @@ type
 
   TForm1 = class(TForm)
     Button1: TButton;
+    BtnUnban: TButton;
     DTLongPollBot1: TDTLongPollBot;
     FlNmEdtUsers: TFileNameEdit;
     IniPropStorage1: TIniPropStorage;
@@ -22,6 +23,7 @@ type
     Memo1: TMemo;
     Memo2: TMemo;
     SpnEdtExChatID: TSpinEditEx;
+    procedure BtnUnbanClick(Sender: TObject);
     procedure Button1Click(Sender: TObject);
     procedure FlNmEdtUsersChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -71,6 +73,24 @@ begin
     aID:=StrToInt64(ExtractDelimited(1, s, [' ', ',', ';']));
     DTLongPollBot1.SenderBot.Token:=DTLongPollBot1.Token;
     DTLongPollBot1.SenderBot.banChatMember(SpnEdtExChatID.Value, aID);
+    Memo2.Lines.Add(s);
+  end;
+  aStringList.Free;
+end;
+
+procedure TForm1.BtnUnbanClick(Sender: TObject);
+var
+  s: String;
+  aStringList: TStringList;
+  aID: Int64;
+begin
+  aStringList:=TStringList.Create;
+  aStringList.LoadFromFile(FlNmEdtUsers.FileName);
+  for s in aStringList do
+  begin
+    aID:=StrToInt64(ExtractDelimited(1, s, [' ', ',', ';']));
+    DTLongPollBot1.SenderBot.Token:=DTLongPollBot1.Token;
+    DTLongPollBot1.SenderBot.unbanChatMember(SpnEdtExChatID.Value, aID, True);
     Memo2.Lines.Add(s);
   end;
   aStringList.Free;

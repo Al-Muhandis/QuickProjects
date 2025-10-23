@@ -25,31 +25,31 @@ type
     function GetCount(aID: Int64): Integer;
     procedure AddToUserList(aMsgObject: TJSONObject);
     procedure AddToUserList(const aName: String; aUserID: Int64);
-    procedure SaveList(const aFileName: String);
+    procedure SaveList(const aFileName: String);                 
+    procedure LoadList(const aFileName: String);
   end;
 
   { TFrmMain }
 
   TFrmMain = class(TForm)
     Button1: TButton;
+    BtnCompletedUsersLoad: TButton;
     Button3: TButton;
     ChckBxStrictFilter: TCheckBox;
     ChckBxStatLogger: TCheckBox;
     DateTimePickerN: TDateTimePicker;
     DrctryEdtStat: TDirectoryEdit;
+    FlNmEdtCompletedUsers: TFileNameEdit;
     FlNmEdtCuratorsFile: TFileNameEdit;
-    FlNmEdtResultJSON: TFileNameEdit;
     FlNmEdtAllUsers: TFileNameEdit;
     IniPropStorage1: TIniPropStorage;
     LblTopicID: TLabel;
     LblStat: TLabel;
     LblFailed: TLabel;
     LblCurators: TLabel;
-    LblCompletedUsers: TLabel;
     LblFileNameAllUsers: TLabel;
     LblFileNameCurators: TLabel;
     LblResultJSONStat: TLabel;
-    LblFileNameResultJSON: TLabel;
     LblAllUsers: TLabel;
     LblStatUpdateCount: TLabel;
     LblStatFilesCount: TLabel;
@@ -57,17 +57,18 @@ type
     LblGroupID: TLabel;
     PgCntrl: TPageControl;
     RdGrpTaskNumFilter: TRadioGroup;
+    SpnEdtTaskNum: TSpinEdit;
     SpnEdtGroupID: TSpinEditEx;
     SpnEdtForumIDN: TSpinEdit;
-    SpnEdtTaskNum: TSpinEdit;
     TbShtMain: TTabSheet;
     VlLstEdtrMediaTypes: TValueListEditor;
     procedure Button1Click({%H-}Sender: TObject);
+    procedure BtnCompletedUsersLoadClick(Sender: TObject);
     procedure Button3Click({%H-}Sender: TObject);
     procedure DrctryEdtStatChange({%H-}Sender: TObject);
     procedure FlNmEdtAllUsersChange({%H-}Sender: TObject);
+    procedure FlNmEdtCompletedUsersChange(Sender: TObject);
     procedure FlNmEdtCuratorsFileChange({%H-}Sender: TObject);
-    procedure FlNmEdtResultJSONChange({%H-}Sender: TObject);
     procedure FormCreate({%H-}Sender: TObject);
     procedure FormDestroy({%H-}Sender: TObject);
     procedure VlLstEdtrMediaTypesValidateEntry({%H-}Sender: TObject; {%H-}aCol, {%H-}aRow: Integer; const OldValue: string;
@@ -77,9 +78,9 @@ type
     FJSONData: TJSONObject;
     FAllUsers: TGroupUsers;
     FLog: TEventLog;
-    function ForumID(aTaskNum: Byte): Integer;
+    function ForumID: Integer;
     function GroupID: Int64;
-    function ForumDeadLine(aTaskNum: Byte): Int64;
+    function ForumDeadLine: Int64;
     function GetMediaCount(i: TTaskMessageType): Integer;
     procedure LoadUsers(aUsers: TGroupUsers; aLabel: TLabel; aFileNameEdit: TFileNameEdit);
     procedure ParseCompleted(aTaskNum: Integer);
@@ -171,6 +172,30 @@ begin
   end;
 end;
 
+procedure TGroupUsers.LoadList(const aFileName: String);
+var
+  aStringList: TStringList;
+  s, aID, aName: String;
+begin
+  Clear;
+  aStringList:=TStringList.Create;
+  try
+    aStringList.LoadFromFile(aFileName);
+    try
+      for s in aStringList do
+      begin
+        aID:=ExtractDelimited(1, s, [' ', ';', ',']);
+        aName:=TrimSet(RightStr(s, Length(s)-Length(aID)), StdWordDelims+[' ']);
+        AddToUserList(aName, StrToInt64(aID));
+      end;
+    except
+      Clear;
+    end;
+  finally
+    aStringList.Free;
+  end;
+end;
+
 { TFrmMain }
 {
 procedure TFrmMain.Button1Click(Sender: TObject);
@@ -228,7 +253,7 @@ begin
       else
         FLog.Warning('#%d: %s', [aID, aName]);
   end;  
-  FFailedUsers.SaveList(Format('~failed%d.csv', [SpnEdtTaskNum.Value]));
+  FFailedUsers.SaveList('~failed.csv');
   LblFailed.Caption:=Format('Failed users: %d', [FFailedUsers.Count]);
 end;
 
@@ -277,36 +302,26 @@ begin
   ParseCompleted(SpnEdtTaskNum.Value);
 end;
 
+procedure TFrmMain.BtnCompletedUsersLoadClick(Sender: TObject);
+begin
+  FCompletedUsers.LoadList(FlNmEdtCompletedUsers.FileName);
+  BtnCompletedUsersLoad.Caption:=Format('Completed users: %d', [FCompletedUsers.Count]);
+end;
+
 procedure TFrmMain.FlNmEdtAllUsersChange(Sender: TObject);
 begin
   LoadUsers(FAllUsers, LblAllUsers, FlNmEdtAllUsers);
 end;
 
+procedure TFrmMain.FlNmEdtCompletedUsersChange(Sender: TObject);
+begin
+  FCompletedUsers.LoadList((Sender as TFileNameEdit).FileName); 
+  BtnCompletedUsersLoad.Caption:=Format('Completed users: %d', [FCompletedUsers.Count]);
+end;
+
 procedure TFrmMain.FlNmEdtCuratorsFileChange(Sender: TObject);
 begin
   LoadUsers(FCuratorsUsers, LblCurators, FlNmEdtCuratorsFile);
-end;
-
-procedure TFrmMain.FlNmEdtResultJSONChange(Sender: TObject);
-var
-  aStringList: TStringList;
-  aJSONData: TJSONObject;
-begin
-  LblResultJSONStat.Caption:='--';
-  if FlNmEdtResultJSON.FileName.IsEmpty then
-    Exit;
-  aStringList:=TStringList.Create;
-  try
-    aStringList.LoadFromFile(FlNmEdtResultJSON.FileName);
-    try
-      aJSONData:=GetJSON(aStringList.Text) as TJSONObject;
-      LblResultJSONStat.Caption:=Format('Rows: %d', [FJSONData.Arrays['rows'].Count]);
-    except
-      FreeAndNil(aJSONData);
-    end;
-  finally
-    aStringList.Free;
-  end;
 end;
 
 procedure TFrmMain.FormCreate(Sender: TObject);
@@ -345,7 +360,7 @@ begin
   NewValue:=TempInt.ToString;
 end;
 
-function TFrmMain.ForumID(aTaskNum: Byte): Integer;
+function TFrmMain.ForumID: Integer;
 begin
   Result:=SpnEdtForumIDN.Value
 end;
@@ -355,7 +370,7 @@ begin
   Result:=SpnEdtGroupID.Value;
 end;
 
-function TFrmMain.ForumDeadLine(aTaskNum: Byte): Int64;
+function TFrmMain.ForumDeadLine: Int64;
 var
   aDeadLine: TDateTime;
 begin
@@ -369,32 +384,13 @@ begin
 end;
 
 procedure TFrmMain.LoadUsers(aUsers: TGroupUsers; aLabel: TLabel; aFileNameEdit: TFileNameEdit);
-var
-  aStringList: TStringList;
-  s, aID, aName: String;
 begin
-  aUsers.Clear;
   aLabel.Caption:='--';
   if aFileNameEdit.FileName.IsEmpty then
     Exit;
-  aStringList:=TStringList.Create;
-  try
-    aStringList.LoadFromFile(aFileNameEdit.FileName);
-    try
-      for s in aStringList do
-      begin
-        aID:=ExtractDelimited(1, s, [' ', ';', ',']);
-        aName:=TrimSet(RightStr(s, Length(s)-Length(aID)), StdWordDelims+[' ']);
-        aUsers.AddToUserList(aName, StrToInt64(aID));
-      end;
-      aLabel.Caption:=Format('Users: %d', [aUsers.Count]);
-      aUsers.SaveList('~'+RightStr(aLabel.Name, Length(aLabel.Name)-Length('Lbl'))+'.csv');
-    except
-      aUsers.Clear;
-    end;
-  finally
-    aStringList.Free;
-  end;
+  aUsers.LoadList(aFileNameEdit.FileName);
+  aLabel.Caption:=Format('Users: %d', [aUsers.Count]);
+  aUsers.SaveList('~'+RightStr(aLabel.Name, Length(aLabel.Name)-Length('Lbl'))+'.csv');
 end;
 
 procedure TFrmMain.ParseCompleted(aTaskNum: Integer);
@@ -456,11 +452,11 @@ var
   end;
 
 begin
-  aThreadID:=ForumID(aTaskNum);
+  aThreadID:=ForumID;
   aGroupID:=GroupID;
   aUpdates:=FJSONData.Arrays['updates'];
   FCompletedUsers.Clear;
-  aDeadLine:=ForumDeadLine(aTaskNum);
+  aDeadLine:=ForumDeadLine;
   aVideoNotes:=TGroupUsers.Create;
   aMediaMsgUsers:=TGroupUsers.Create;   
   aTxtMsgUsers:=TGroupUsers.Create;
@@ -492,8 +488,8 @@ begin
         Continue;
       HandleMessageN
     end;
-    LblCompletedUsers.Caption:=Format('Completed users: %d', [FCompletedUsers.Count]);
-    FCompletedUsers.SaveList(Format('~completed%d.csv', [aTaskNum]));
+    BtnCompletedUsersLoad.Caption:=Format('Completed users: %d', [FCompletedUsers.Count]);
+    FCompletedUsers.SaveList(FlNmEdtCompletedUsers.FileName);
   finally
     aDocuments.Free;
     aVideos.Free;

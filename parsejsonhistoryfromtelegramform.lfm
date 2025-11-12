@@ -8,7 +8,7 @@ object FrmMain: TFrmMain
   ClientWidth = 888
   DesignTimePPI = 120
   SessionProperties = 'ChckBxStatLogger.Checked;DateTimePickerN.Date;DateTimePickerN.Time;DrctryEdtStat.Directory;FlNmEdtAllUsers.FileName;FlNmEdtCuratorsFile.FileName;FlNmEdtResultJSON.FileName;RdGrpTaskNumFilter.ItemIndex;SpnEdtForumIDN.Value;SpnEdtGroupID.Value;FlNmEdtCompletedUsers.FileName'
-  LCLVersion = '4.2.0.0'
+  LCLVersion = '4.4.0.0'
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   object PgCntrl: TPageControl
@@ -213,7 +213,7 @@ object FrmMain: TFrmMain
       object VlLstEdtrMediaTypes: TValueListEditor
         Left = 520
         Height = 280
-        Top = 296
+        Top = 320
         Width = 344
         RowCount = 2
         TabOrder = 9
@@ -294,6 +294,14 @@ object FrmMain: TFrmMain
         Top = 51
         Width = 120
         TabOrder = 14
+      end
+      object ChckBxAltDocAsMedia: TCheckBox
+        Left = 525
+        Height = 24
+        Top = 287
+        Width = 170
+        Caption = 'Doc as Video or Photo'
+        TabOrder = 15
       end
     end
   end

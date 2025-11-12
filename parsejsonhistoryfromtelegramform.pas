@@ -37,6 +37,7 @@ type
     Button3: TButton;
     ChckBxStrictFilter: TCheckBox;
     ChckBxStatLogger: TCheckBox;
+    ChckBxAltDocAsMedia: TCheckBox;
     DateTimePickerN: TDateTimePicker;
     DrctryEdtStat: TDirectoryEdit;
     FlNmEdtCompletedUsers: TFileNameEdit;
@@ -63,7 +64,7 @@ type
     TbShtMain: TTabSheet;
     VlLstEdtrMediaTypes: TValueListEditor;
     procedure Button1Click({%H-}Sender: TObject);
-    procedure BtnCompletedUsersLoadClick(Sender: TObject);
+    procedure BtnCompletedUsersLoadClick({%H-}Sender: TObject);
     procedure Button3Click({%H-}Sender: TObject);
     procedure DrctryEdtStatChange({%H-}Sender: TObject);
     procedure FlNmEdtAllUsersChange({%H-}Sender: TObject);
@@ -83,7 +84,7 @@ type
     function ForumDeadLine: Int64;
     function GetMediaCount(i: TTaskMessageType): Integer;
     procedure LoadUsers(aUsers: TGroupUsers; aLabel: TLabel; aFileNameEdit: TFileNameEdit);
-    procedure ParseCompleted(aTaskNum: Integer);
+    procedure ParseCompleted;
     procedure SetMediaCount(i: TTaskMessageType; AValue: Integer);
     procedure UpdateCheckGroupMedias;           
     function GetCheckGroupMedias: TTaskMessageSet;
@@ -299,7 +300,7 @@ end;
 
 procedure TFrmMain.Button1Click(Sender: TObject);
 begin
-  ParseCompleted(SpnEdtTaskNum.Value);
+  ParseCompleted;
 end;
 
 procedure TFrmMain.BtnCompletedUsersLoadClick(Sender: TObject);
@@ -393,7 +394,7 @@ begin
   aUsers.SaveList('~'+RightStr(aLabel.Name, Length(aLabel.Name)-Length('Lbl'))+'.csv');
 end;
 
-procedure TFrmMain.ParseCompleted(aTaskNum: Integer);
+procedure TFrmMain.ParseCompleted;
 var
   aUpdates: TJSONArray;
   aUpdate: TJSONEnum;
@@ -434,7 +435,10 @@ var
         if m in aMSet then
         begin
           if (aMsgObject.IndexOfName(_MediaTypeNames[m])>-1) then
-            GetListFromMedia(m).AddToUserList(aName, aID);
+            GetListFromMedia(m).AddToUserList(aName, aID)
+          else
+            if ChckBxAltDocAsMedia.Checked and (aMsgObject.IndexOfName(_MediaTypeNames[tmtDocument])>-1) then
+              GetListFromMedia(m).AddToUserList(aName, aID);
           aAddToList:=aAddToList and (GetListFromMedia(m).GetCount(aID)>=MediaCount[m]);
         end;
       end;
